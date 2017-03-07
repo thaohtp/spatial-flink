@@ -1,0 +1,8 @@
+code/spatial-analysis-flink/.idea/*
+code/dummy-test/.idea/*
+code/spatial-analysis-flink/target/*
+code/dummy-test/target/*
+code/dummy-test/dummy-test.iml
+code/spatial-analysis-flink/spatial-analysis-flink.iml
+code/dummy-test/out/*
+code/spatial-analysis-flink/out/*
