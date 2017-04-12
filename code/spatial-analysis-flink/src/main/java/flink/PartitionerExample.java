@@ -19,6 +19,8 @@ import java.util.List;
  * Created by JML on 2/4/17.
  */
 public class PartitionerExample {
+    private static int MAX_POINT_PER_NODE = 4;
+
     public static class MyPartitioner implements Partitioner<Integer> {
         @Override
         public int partition(Integer key, int numPartitions) {
@@ -55,16 +57,25 @@ public class PartitionerExample {
                     subList.add(pointIter.next());
                 }
 
-                STRPacking strPacking = new STRPacking(4, 2, subList);
+                STRPacking strPacking = new STRPacking(MAX_POINT_PER_NODE, 2, subList);
                 strPacking.sort();
                 for(int i =0; i<strPacking.getSize(); i++){
                     collector.collect(strPacking.getPoint(i));
                 }
+
+                // rtree
+
+                // what should we do now?
+                // build STR partition in each partition?
+
+                // or RTree??
+
 
             }
         })
                 .print();
 //        partitionedData.writeAsCsv("/jml/data/test/spatial_analysis_flink/dummy_test", FileSystem.WriteMode.OVERWRITE);
         env.execute("Dummy test in Flink");
+//        env
     }
 }

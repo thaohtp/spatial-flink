@@ -14,11 +14,11 @@ public class PointComparator implements Comparator<Point>{
 
     @Override
     public int compare(Point p1, Point p2) {
-        if(p1.getValueOfDimension(sortDimension) > p2.getValueOfDimension(sortDimension)){
+        if(p1.getDimension(sortDimension) > p2.getDimension(sortDimension)){
             return 1;
         }
         else{
-            if(p1.getValueOfDimension(sortDimension) < p2.getValueOfDimension(sortDimension)){
+            if(p1.getDimension(sortDimension) < p2.getDimension(sortDimension)){
                 return -1;
             }
             else return 0;
