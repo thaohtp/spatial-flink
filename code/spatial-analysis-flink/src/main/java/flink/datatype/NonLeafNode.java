@@ -2,24 +2,29 @@ package flink.datatype;
 
 import flink.RTree;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by JML on 3/31/17.
  */
-public class NonLeafNode extends RTreeNode{
+public class NonLeafNode extends RTreeNode implements Serializable{
 
     private List<RTreeNode> childNodes;
 
     public NonLeafNode(){
-        super(false);
+
+    }
+
+    public NonLeafNode(int nbDimension){
+        super(nbDimension, false);
         this.childNodes = new ArrayList<RTreeNode>();
     }
 
     //For leaf node, what should be the pointer
-    public NonLeafNode(MBR mbr, List<RTreeNode> childNodes){
-        super(mbr,false);
+    public NonLeafNode(int nbDimension, MBR mbr, List<RTreeNode> childNodes){
+        super(nbDimension, mbr,false);
         this.childNodes = childNodes;
     }
 

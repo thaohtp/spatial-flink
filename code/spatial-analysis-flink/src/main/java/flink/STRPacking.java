@@ -11,68 +11,95 @@ import java.util.List;
  * Created by JML on 3/7/17.
  */
 public class STRPacking {
-    List<Point> pointList;
     int pointPerNode;
     int nbDimension;
 
-    public STRPacking(int nbPointPerNode, int nbDimension, List<Point> pointList){
-        this.pointList = pointList;
+    public STRPacking(int nbPointPerNode, int nbDimension){
         this.pointPerNode = nbPointPerNode;
         this.nbDimension = nbDimension;
     }
 
-    public void sort(){
-        // sort by first dimension
+//    public void sort(){
+//        // sort by first dimension
+//
+//        for(int i =0; i< nbDimension; i++){
+//            // calculate dimension: dimension is varies from 1 to n
+//            int k = i + 1;
+//
+//            // calculate P = r/n with r = size of dataset, n = number of points per node
+//            int P =0;
+//            if(this.pointList.size() % this.pointPerNode == 0 ){
+//                P = this.pointList.size() /this.pointPerNode;
+//            }
+//            else{
+//                P = this.pointList.size() /this.pointPerNode + 1;
+//            }
+//
+//            int S = 1;
+//            if(k != 1){
+//                float temp = 1L/(k-1);
+//                S = (int) Math.pow(P, temp);
+//            }
+//
+//            // sort start index, sort end index
+//            int pointPerSlab = this.pointList.size();
+//            if(S != 1){
+//                pointPerSlab = (int) Math.ceil(Math.sqrt(this.pointList.size() / (S-1)));
+//            }
+//            for(int j =0; j < S; j++){
+//                int startIndex = pointPerSlab * j;
+//                int endIndex = Math.min(pointPerSlab * (j+1) -1, this.pointList.size());
+//                List<Point> subList = new ArrayList<Point>();
+//                for(int m = startIndex; m <= endIndex; m++){
+//                    subList.add(this.pointList.remove(startIndex));
+//                }
+//                Collections.sort(subList, new PointComparator(k-1));
+//                for(int m = startIndex; m <= endIndex; m++) {
+//                    pointList.add(m, subList.remove(0));
+//                }
+//            }
+//
+//            // sort those point
+//        }
+//    }
 
-        for(int i =0; i< nbDimension; i++){
-            // calculate dimension: dimension is varies from 1 to n
-            int k = i + 1;
-
-            // calculate P = r/n with r = size of dataset, n = number of points per node
-            int P =0;
-            if(this.pointList.size() % this.pointPerNode == 0 ){
-                P = this.pointList.size() /this.pointPerNode;
-            }
-            else{
-                P = this.pointList.size() /this.pointPerNode + 1;
-            }
-
-            int S = 1;
-            if(k != 1){
-                float temp = 1L/(k-1);
-                S = (int) Math.pow(P, temp);
-            }
-
-            // sort start index, sort end index
-            int pointPerSlab = this.pointList.size();
-            if(S != 1){
-                pointPerSlab = (int) Math.ceil(Math.sqrt(this.pointList.size() / (S-1)));
-            }
-            for(int j =0; j < S; j++){
-                int startIndex = pointPerSlab * j;
-                int endIndex = Math.min(pointPerSlab * (j+1) -1, this.pointList.size());
-                List<Point> subList = new ArrayList<Point>();
-                for(int m = startIndex; m <= endIndex; m++){
-                    subList.add(this.pointList.remove(startIndex));
-                }
-                Collections.sort(subList, new PointComparator(k-1));
-                for(int m = startIndex; m <= endIndex; m++) {
-                    pointList.add(m, subList.remove(0));
-                }
-            }
-
-            // sort those point
-        }
-    }
-
-    public RTree createRTree() throws Exception {
+    public RTree createRTree(List<Point> pointList) throws Exception {
         // 1. Pack points into leaf node
-        List<SliceIndex> sliceIndexList = sortPoints(this.pointList, 0, this.pointList.size(), this.pointPerNode, 0, this.nbDimension, this.nbDimension);
+        List<SliceIndex> sliceIndexList = sortPoints(pointList, 0, pointList.size(), this.pointPerNode, 0, this.nbDimension, this.nbDimension);
         List<RTreeNode> leafNodes = new ArrayList<RTreeNode>();
         for(int i = 0; i < sliceIndexList.size(); i++){
             SliceIndex slice = sliceIndexList.get(i);
-            List<Point> subList = this.pointList.subList(slice.getStartIndex(), slice.getEndIndex());
+            List<Point> subList = pointList.subList(slice.getStartIndex(), slice.getEndIndex());
             List<RTreeNode> treeNodes = packLeafNode(subList, this.pointPerNode, this.nbDimension-1, true);
+            leafNodes.addAll(treeNodes);
+        }
+
+        // 2. Pack leaf nodes into non-leaf nodes. Pack bottom - up until we get only one root node
+        List<RTreeNode> nonLeafNode = null;
+        do{
+            List<SliceIndex> sliceIndexOfNodes = sortRTreeNode(leafNodes, 0, leafNodes.size(), this.pointPerNode, 0, this.nbDimension, this.nbDimension);
+            nonLeafNode = new ArrayList<RTreeNode>();
+            for(int i = 0; i < sliceIndexOfNodes.size(); i++){
+                SliceIndex slice = sliceIndexOfNodes.get(i);
+                List<RTreeNode> subList = leafNodes.subList(slice.getStartIndex(), slice.getEndIndex());
+                List<RTreeNode> treeNodes = packRTreeNodes(subList, this.pointPerNode, this.nbDimension-1, false);
+                nonLeafNode.addAll(treeNodes);
+            }
+            leafNodes = nonLeafNode;
+        } while(nonLeafNode.size() != 1);
+
+        return new RTree(nonLeafNode.get(0));
+    }
+
+
+    public RTree createGlobalRTree(List<PartitionPoint> pointList) throws Exception {
+        // 1. Pack points into leaf node
+        List<SliceIndex> sliceIndexList = sortPartitionPoints(pointList, 0, pointList.size(), this.pointPerNode, 0, this.nbDimension, this.nbDimension);
+        List<RTreeNode> leafNodes = new ArrayList<RTreeNode>();
+        for(int i = 0; i < sliceIndexList.size(); i++){
+            SliceIndex slice = sliceIndexList.get(i);
+            List<PartitionPoint> subList = pointList.subList(slice.getStartIndex(), slice.getEndIndex());
+            List<RTreeNode> treeNodes = packGlobalLeafNode(subList, this.pointPerNode, this.nbDimension-1, true);
             leafNodes.addAll(treeNodes);
         }
 
@@ -117,8 +144,10 @@ public class STRPacking {
         int n = nbPointsPerNode;
         double P = r * 1.0/n;
         double power = 1.0 * (k-1) / k;
-        int slabSize =(int) Math.ceil(n * Math.pow(P, power));
+        int slabSize =(int) Math.ceil(n * Math.ceil(Math.pow(P, power)));
         int nbSlabs = (int) Math.ceil(r * 1.0 /slabSize);
+//        int nbSlabs = (int) Math.ceil(Math.pow(P, 1.0/k));
+//        int slabSize = (int) Math.floor(r / nbSlabs);
 
         // Sort the range
         List<RTreeNode> subList = nodes.subList(startIndex, endIndex);
@@ -143,13 +172,6 @@ public class STRPacking {
             finalStartSubIndex = sliceIndices.get(sliceIndices.size() -1).getEndIndex();
         }
         sliceIndices.addAll(sortRTreeNode(nodes, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
-
-//        // TODO: clear this printing out after testing
-//        System.out.println("Slice index: ");
-//        for(int i =0; i<sliceIndices.size(); i++){
-//            SliceIndex index = sliceIndices.get(i);
-//            System.out.println(index.toString());
-//        }
 
         return sliceIndices;
     }
@@ -179,8 +201,10 @@ public class STRPacking {
         int n = nbPointsPerNode;
         double P = r * 1.0/n;
         double power = 1.0 * (k-1) / k;
-        int slabSize =(int) Math.ceil(n * Math.pow(P, power));
+        int slabSize =(int) Math.ceil(n * Math.ceil(Math.pow(P, power)));
         int nbSlabs = (int) Math.ceil(r * 1.0 /slabSize);
+//        int nbSlabs = (int) Math.ceil(Math.pow(P, 1.0/k));
+//        int slabSize = (int) Math.floor(r / nbSlabs);
 
         // Sort the range
         List<Point> subList = points.subList(startIndex, endIndex);
@@ -206,12 +230,63 @@ public class STRPacking {
         }
         sliceIndices.addAll(sortPoints(points, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
 
-//        // TODO: clear this printing out after testing
-//        System.out.println("Slice index: ");
-//        for(int i =0; i<sliceIndices.size(); i++){
-//            SliceIndex index = sliceIndices.get(i);
-//            System.out.println(index.toString());
-//        }
+        return sliceIndices;
+    }
+
+    /**
+     * Sort given points into slabs
+     * @param points data points
+     * @param startIndex index of start point
+     * @param endIndex index of end point (end index is exclusive)
+     * @param nbPointsPerNode capacity of one node
+     * @param currentDimension dimension which is used to compare points
+     * @param nbDimension number of dimensions in points
+     * @param k recursively dimension to divide into slabs
+     * @return List of SliceIndex
+     */
+    private List<SliceIndex> sortPartitionPoints(List<PartitionPoint> points, int startIndex, int endIndex, int nbPointsPerNode, final int currentDimension, int nbDimension, int k){
+
+        // reach final dimension then stop sorting recursively
+        if(currentDimension == nbDimension){
+            List<SliceIndex> sliceIndexList = new ArrayList<SliceIndex>();
+            sliceIndexList.add(new SliceIndex(startIndex, endIndex));
+            return sliceIndexList;
+        }
+
+        // Calculate all information for r, n, S, P
+        int r = endIndex - startIndex;
+        int n = nbPointsPerNode;
+        double P = r * 1.0/n;
+        double power = 1.0 * (k-1) / k;
+        int slabSize =(int) Math.ceil(n * Math.ceil(Math.pow(P, power)));
+        int nbSlabs = (int) Math.ceil(r * 1.0 /slabSize);
+//        int nbSlabs = (int) Math.ceil(Math.pow(P, 1.0/k));
+//        int slabSize = (int) Math.floor(r / nbSlabs);
+
+        // Sort the range
+        List<PartitionPoint> subList = points.subList(startIndex, endIndex);
+        Collections.sort(subList, new Comparator<PartitionPoint>() {
+            @Override
+            public int compare(PartitionPoint o1, PartitionPoint o2) {
+                return o1.getMbr().compare(o2.getMbr(), currentDimension);
+            }
+        });
+
+        // Divide range into slabs
+        List<SliceIndex> sliceIndices = new ArrayList<SliceIndex>();
+        for(int i =0; i < nbSlabs - 1; i++){
+            int startSubIndex = startIndex + i * slabSize;
+            int endSubIndex = startIndex + (i+1) * slabSize;
+            sliceIndices.addAll(sortPartitionPoints(points, startSubIndex, endSubIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
+        }
+
+        // Calculate start-end index of final slab
+        int finalStartSubIndex = startIndex;
+        if(sliceIndices.size() != 0){
+            finalStartSubIndex = sliceIndices.get(sliceIndices.size() -1).getEndIndex();
+        }
+        sliceIndices.addAll(sortPartitionPoints(points, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
+
         return sliceIndices;
     }
 
@@ -224,15 +299,6 @@ public class STRPacking {
      * @return
      */
     private List<RTreeNode> packRTreeNodes(List<RTreeNode> nodes, int nbPointPerNode, final int compareDim, boolean isLeaf) throws Exception {
-//
-//        // first sort the points or MBR
-//        Collections.sort(nodes, new Comparator<RTreeNode>() {
-//            @Override
-//            public int compare(RTreeNode o1, RTreeNode o2) {
-//                return o1.getMbr().compare(o2.getMbr(), compareDim);
-//            }
-//        });
-
         int nbMBR = (int) Math.ceil(nodes.size() * 1.0/nbPointPerNode);
         List<RTreeNode> result = new ArrayList<RTreeNode>();
         // only pack until reaching (n-1)th slices
@@ -243,10 +309,10 @@ public class STRPacking {
 
             RTreeNode parentNode = null;
             if(isLeaf){
-                parentNode = new LeafNode();
+                parentNode = new LeafNode(this.nbDimension);
             }
             else{
-                parentNode = new NonLeafNode();
+                parentNode = new NonLeafNode(this.nbDimension);
             }
 
             for(int j = startIndex; j<endIndex; j++){
@@ -260,10 +326,10 @@ public class STRPacking {
         int startIndex = result.size();
         RTreeNode finalParentNode = null;
         if(isLeaf){
-            finalParentNode = new LeafNode();
+            finalParentNode = new LeafNode(this.nbDimension);
         }
         else{
-            finalParentNode = new NonLeafNode();
+            finalParentNode = new NonLeafNode(this.nbDimension);
         }
         for(int i = startIndex; i< nodes.size(); i++){
             RTreeNode childNode = nodes.get(i);
@@ -277,15 +343,6 @@ public class STRPacking {
 
     // TODO: refactor here, not good solution
     private List<RTreeNode> packLeafNode(List<Point> points, int nbPointPerNode, final int compareDim, boolean isLeaf) throws Exception {
-
-        // first sort the points or MBR
-//        Collections.sort(points, new Comparator<Point>() {
-//            @Override
-//            public int compare(Point o1, Point o2) {
-//                return o1.compare(o2, compareDim);
-//            }
-//        });
-
         int nbMBR = (int) Math.ceil(points.size() * 1.0/nbPointPerNode);
         List<RTreeNode> result = new ArrayList<RTreeNode>();
         for(int i =0; i<nbMBR - 1; i++){
@@ -295,10 +352,10 @@ public class STRPacking {
 
             RTreeNode parentNode = null;
             if(isLeaf){
-                parentNode = new LeafNode();
+                parentNode = new LeafNode(this.nbDimension);
             }
             else{
-                parentNode = new NonLeafNode();
+                parentNode = new NonLeafNode(this.nbDimension);
             }
 
             for(int j = startIndex; j<endIndex; j++){
@@ -312,10 +369,10 @@ public class STRPacking {
         int startIndex = result.size();
         RTreeNode finalParentNode = null;
         if(isLeaf){
-            finalParentNode = new LeafNode();
+            finalParentNode = new LeafNode(this.nbDimension);
         }
         else{
-            finalParentNode = new NonLeafNode();
+            finalParentNode = new NonLeafNode(this.nbDimension);
         }
         for(int i = startIndex; i< points.size(); i++){
             Point childNode = points.get(i);
@@ -323,46 +380,50 @@ public class STRPacking {
         }
         result.add(finalParentNode);
 
+        return result;
+    }
+
+
+    // TODO: refactor here, not good solution
+    private List<RTreeNode> packGlobalLeafNode(List<PartitionPoint> points, int nbPointPerNode, final int compareDim, boolean isLeaf) throws Exception {
+        int nbMBR = (int) Math.ceil(points.size() * 1.0/nbPointPerNode);
+        List<RTreeNode> result = new ArrayList<RTreeNode>();
+        for(int i =0; i<nbMBR - 1; i++){
+            // calculate start-end index to pack nodes into MBR
+            int startIndex = i * nbPointPerNode;
+            int endIndex = (i+1) * nbPointPerNode;
+
+            RTreeNode parentNode = null;
+            if(isLeaf){
+                parentNode = new GlobalLeafNode(this.nbDimension);
+            }
+            else{
+                parentNode = new NonLeafNode(this.nbDimension);
+            }
+
+            for(int j = startIndex; j<endIndex; j++){
+                PartitionPoint childPoint = points.get(j);
+                parentNode.insert(childPoint);
+            }
+            result.add(parentNode);
+        }
+
+        // pack n-th slice
+        int startIndex = result.size();
+        RTreeNode finalParentNode = null;
+        if(isLeaf){
+            finalParentNode = new GlobalLeafNode(this.nbDimension);
+        }
+        else{
+            finalParentNode = new NonLeafNode(this.nbDimension);
+        }
+        for(int i = startIndex; i< points.size(); i++){
+            PartitionPoint childNode = points.get(i);
+            finalParentNode.insert(childNode);
+        }
+        result.add(finalParentNode);
 
         return result;
     }
 
-    public Point getPoint(int index){
-        return this.pointList.get(index);
-    }
-
-    public int getSize(){
-        return this.pointList.size();
-    }
-
-
-    public class SliceIndex{
-        private int startIndex;
-        private int endIndex;
-
-        public SliceIndex(int startIndex, int endIndex){
-            this.startIndex = startIndex;
-            this.endIndex = endIndex;
-        }
-
-        public int getStartIndex() {
-            return startIndex;
-        }
-
-        public void setStartIndex(int startIndex) {
-            this.startIndex = startIndex;
-        }
-
-        public int getEndIndex() {
-            return endIndex;
-        }
-
-        public void setEndIndex(int endIndex) {
-            this.endIndex = endIndex;
-        }
-
-        public String toString(){
-            return this.startIndex + " - " + this.endIndex;
-        }
-    }
 }

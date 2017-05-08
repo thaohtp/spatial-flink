@@ -11,13 +11,20 @@ import java.util.List;
 public class RTreeNode {
     protected MBR mbr;
     protected boolean isLeaf = false;
+    protected int nbDimension;
 
-    public RTreeNode(boolean isLeaf){
-        this.isLeaf = isLeaf;
-        this.mbr = new MBR();
+    public RTreeNode(){
+
     }
 
-    public RTreeNode(MBR mbr, boolean isLeaf){
+    public RTreeNode(int nbDimension, boolean isLeaf){
+        this.nbDimension = nbDimension;
+        this.isLeaf = isLeaf;
+        this.mbr = new MBR(nbDimension);
+    }
+
+    public RTreeNode(int nbDimension, MBR mbr, boolean isLeaf){
+        this.nbDimension = nbDimension;
         this.mbr = mbr;
         this.isLeaf = isLeaf;
     }
@@ -84,6 +91,18 @@ public class RTreeNode {
         }
         else{
             throw new Exception("Current node is not a leaf node");
+        }
+
+    }
+
+    public void insert(PartitionPoint childPoint) throws Exception{
+        this.mbr.addMBR(childPoint.getMbr());
+        if(this instanceof GlobalLeafNode){
+            GlobalLeafNode castedNode = (GlobalLeafNode) this;
+            castedNode.addPoint(childPoint);
+        }
+        else{
+            throw new Exception("Current node is not a global leaf node");
         }
 
     }

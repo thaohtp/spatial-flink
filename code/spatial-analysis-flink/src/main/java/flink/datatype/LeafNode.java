@@ -10,15 +10,15 @@ public class LeafNode extends RTreeNode{
 
     private List<Point> pointList;
 
-    public LeafNode(){
-        super(true);
+    public LeafNode(int nbDimension){
+        super(nbDimension, true);
         this.pointList = new ArrayList<Point>();
     }
 
     //TODO: For leaf node, what should be the pointer
     // Consider then add another list instead of List of Node
-    public LeafNode(MBR mbr, List<Point> childNodes){
-        super(mbr, true);
+    public LeafNode(int nbDimension, MBR mbr, List<Point> childNodes){
+        super(nbDimension, mbr, true);
         this.pointList = childNodes;
     }
 
@@ -42,5 +42,21 @@ public class LeafNode extends RTreeNode{
             str.append(point.toString());
         }
         return str.toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        LeafNode leaf2 = (LeafNode) obj;
+        if(!leaf2.getPointList().containsAll(this.getPointList())){
+            return false;
+        }
+        if(!this.getPointList().containsAll(leaf2.getPointList())){
+            return false;
+        }
+        if(!leaf2.getMbr().equals(this.getMbr())){
+            return false;
+        }
+
+        return true;
     }
 }

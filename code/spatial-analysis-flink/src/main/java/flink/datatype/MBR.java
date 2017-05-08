@@ -1,23 +1,42 @@
 package flink.datatype;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by JML on 3/31/17.
  */
-public class MBR {
+public class MBR implements Serializable{
 
     // Point1, point2 define rectangle
     private Point maxPoint;
     private Point minPoint;
     private boolean isInitialized = true;
+    private int nbDimension;
 
-    public MBR(){
-        this.maxPoint = new Point(Float.MAX_VALUE, Float.MAX_VALUE);
-        this.minPoint = new Point(Float.MIN_VALUE, Float.MIN_VALUE);
+    public MBR(int nbDimension){
+        this.nbDimension = nbDimension;
+        List<Float> maxList = new ArrayList<Float>(nbDimension);
+        List<Float> minList = new ArrayList<Float>(nbDimension);
+        for(int i =0; i<nbDimension; i++){
+            maxList.add(i, Float.MAX_VALUE);
+            minList.add(i, Float.MIN_VALUE);
+        }
+        this.maxPoint = new Point(maxList);
+        this.minPoint = new Point(minList);
     }
 
     public MBR(Point point1, Point point2){
-        this.maxPoint = new Point(Float.MAX_VALUE, Float.MAX_VALUE);
-        this.minPoint = new Point(Float.MIN_VALUE, Float.MIN_VALUE);
+        this.nbDimension = point1.getNbDimension();
+        List<Float> maxList = new ArrayList<Float>(nbDimension);
+        List<Float> minList = new ArrayList<Float>(nbDimension);
+        for(int i =0; i<nbDimension; i++){
+            maxList.add(i, Float.MAX_VALUE);
+            minList.add(i, Float.MIN_VALUE);
+        }
+        this.maxPoint = new Point(maxList);
+        this.minPoint = new Point(minList);
 
         this.addPoint(point1);
         this.addPoint(point2);
@@ -44,10 +63,14 @@ public class MBR {
 
     public void addPoint(Point point){
         if(this.isInitialized){
-            this.maxPoint.setX(point.getX());
-            this.maxPoint.setY(point.getY());
-            this.minPoint.setX(point.getX());
-            this.minPoint.setY(point.getY());
+            for(int i =0; i<nbDimension; i++){
+                this.maxPoint.setDimension(point.getDimension(i), i);
+                this.minPoint.setDimension(point.getDimension(i), i);
+            }
+//            this.maxPoint.setX(point.getX());
+//            this.maxPoint.setY(point.getY());
+//            this.minPoint.setX(point.getX());
+//            this.minPoint.setY(point.getY());
 //            this.minPoint = point;
             this.isInitialized = false;
         }
@@ -100,6 +123,19 @@ public class MBR {
         float val1 = (this.maxPoint.getDimension(dimension) + this.minPoint.getDimension(dimension)) /2;
         float val2 = (mbr.getMaxPoint().getDimension(dimension) + this.getMinPoint().getDimension(dimension)) /2;
         return val1 > val2 ? 1: (val1 == val2 ? 0: -1);
+    }
 
+    @Override
+    public boolean equals(Object obj) {
+        MBR mbr2 = (MBR) obj;
+        if(!mbr2.getMinPoint().equals(this.getMinPoint()) || !mbr2.getMaxPoint().equals(this.getMaxPoint())){
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "MBR: Min" + this.minPoint.toString() + " - Max" + this.getMaxPoint().toString();
     }
 }
