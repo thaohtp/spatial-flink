@@ -1,19 +1,16 @@
 package str_test;
 
 import flink.RTree;
-import flink.RTreePartitioner;
 import flink.STRPacking;
-import flink.datatype.PartitionPoint;
+import flink.STRPartitioner;
+import flink.datatype.PartitionedMBR;
 import flink.datatype.Point;
 import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.api.java.operators.MapPartitionOperator;
 import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.util.Collector;
-import org.apache.hadoop.record.Utils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -70,6 +67,12 @@ public class PartitionerExample {
                 });
 
 //        partitionedData.print();
+        partitionedData.mapPartition(new MapPartitionFunction<Point, Object>() {
+            @Override
+            public void mapPartition(Iterable<Point> iterable, Collector<Object> collector) throws Exception {
+
+            }
+        });
 
         DataSet<RTree> rtrees = partitionedData.mapPartition(new MapPartitionFunction<Point, RTree>() {
             @Override
@@ -94,16 +97,16 @@ public class PartitionerExample {
             public void reduce(Iterable<RTree> iterable, Collector<RTree> collector) throws Exception {
                 Iterator<RTree> rtreeIter = iterable.iterator();
                 int i =0;
-                List<PartitionPoint> partitionPointList = new ArrayList<PartitionPoint>();
+                List<PartitionedMBR> partitionedMBRList = new ArrayList<PartitionedMBR>();
                 while(rtreeIter.hasNext()){
                     i++;
                     RTree rtree = rtreeIter.next();
-                    PartitionPoint point = new PartitionPoint(rtree.getRootNode().getMbr(), i);
-                    partitionPointList.add(point);
+                    PartitionedMBR point = new PartitionedMBR(rtree.getRootNode().getMbr(), i);
+                    partitionedMBRList.add(point);
                 }
 
                 STRPacking strPacking = new STRPacking(3,2);
-                RTree globalTree = strPacking.createGlobalRTree(partitionPointList);
+                RTree globalTree = strPacking.createGlobalRTree(partitionedMBRList);
                 collector.collect(globalTree);
             }
         });
@@ -113,10 +116,10 @@ public class PartitionerExample {
         RTree rTree = globalRTree.collect().get(0);
         System.out.println("Search result " + rTree.getRootNode().getMbr().contains(TestUtil.create2DPoint(2,3)));
 
-        partitionedData.partitionCustom(new RTreePartitioner(rTree), new KeySelector<Point, String>() {
+        partitionedData.partitionCustom(new STRPartitioner(rTree), new KeySelector<Point, Point>() {
             @Override
-            public String getKey(Point point) throws Exception {
-                return point.getValues().toString();
+            public Point getKey(Point point) throws Exception {
+                return point;
             }
         }).print();
 
@@ -127,7 +130,7 @@ public class PartitionerExample {
 //            }
 //        });
 
-//        partitionedData.partitionCustom(new RTreePartitioner(rTree), String.valueOf(new KeySelector<Point, Point>() {
+//        partitionedData.partitionCustom(new STRPartitioner(rTree), String.valueOf(new KeySelector<Point, Point>() {
 //            @Override
 //            public Point getKey(Point point) throws Exception {
 //                return point;

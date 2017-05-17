@@ -6,18 +6,18 @@ import java.util.List;
 /**
  * Created by JML on 3/31/17.
  */
-public class LeafNode extends RTreeNode{
+public class PointLeafNode extends RTreeNode{
 
     private List<Point> pointList;
 
-    public LeafNode(int nbDimension){
+    public PointLeafNode(int nbDimension){
         super(nbDimension, true);
         this.pointList = new ArrayList<Point>();
     }
 
     //TODO: For leaf node, what should be the pointer
     // Consider then add another list instead of List of Node
-    public LeafNode(int nbDimension, MBR mbr, List<Point> childNodes){
+    public PointLeafNode(int nbDimension, MBR mbr, List<Point> childNodes){
         super(nbDimension, mbr, true);
         this.pointList = childNodes;
     }
@@ -46,7 +46,7 @@ public class LeafNode extends RTreeNode{
 
     @Override
     public boolean equals(Object obj) {
-        LeafNode leaf2 = (LeafNode) obj;
+        PointLeafNode leaf2 = (PointLeafNode) obj;
         if(!leaf2.getPointList().containsAll(this.getPointList())){
             return false;
         }

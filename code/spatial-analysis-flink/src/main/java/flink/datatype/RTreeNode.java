@@ -1,14 +1,12 @@
 package flink.datatype;
 
-import flink.RTree;
-
-import java.util.ArrayList;
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by JML on 3/31/17.
  */
-public class RTreeNode {
+public class RTreeNode implements Serializable {
     protected MBR mbr;
     protected boolean isLeaf = false;
     protected int nbDimension;
@@ -85,8 +83,8 @@ public class RTreeNode {
 
     public void insert(Point childPoint) throws Exception{
         this.mbr.addPoint(childPoint);
-        if(this instanceof LeafNode){
-            LeafNode castedNode = (LeafNode) this;
+        if(this instanceof PointLeafNode){
+            PointLeafNode castedNode = (PointLeafNode) this;
             castedNode.addPoint(childPoint);
         }
         else{
@@ -95,10 +93,10 @@ public class RTreeNode {
 
     }
 
-    public void insert(PartitionPoint childPoint) throws Exception{
+    public void insert(PartitionedMBR childPoint) throws Exception{
         this.mbr.addMBR(childPoint.getMbr());
-        if(this instanceof GlobalLeafNode){
-            GlobalLeafNode castedNode = (GlobalLeafNode) this;
+        if(this instanceof MBRLeafNode){
+            MBRLeafNode castedNode = (MBRLeafNode) this;
             castedNode.addPoint(childPoint);
         }
         else{

@@ -5,11 +5,11 @@ import java.io.Serializable;
 /**
  * Created by JML on 4/25/17.
  */
-public class PartitionPoint implements Serializable{
+public class PartitionedMBR implements Serializable{
     private MBR mbr;
 
     private int partitionNumber;
-    public PartitionPoint(MBR mbr, Integer partitionNumber){
+    public PartitionedMBR(MBR mbr, Integer partitionNumber){
         this.mbr = mbr;
         this.partitionNumber = partitionNumber;
     }

@@ -13,6 +13,7 @@ import org.apache.flink.util.Collector;
  */
 public class PartitionerExample {
     public static class MyPartitioner implements Partitioner<Integer> {
+
         @Override
         public int partition(Integer key, int numPartitions) {
             return key % numPartitions;

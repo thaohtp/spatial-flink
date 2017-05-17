@@ -96,6 +96,8 @@ public class MBR implements Serializable{
             return;
         }
 
+        this.addPoint(mbr.getMaxPoint());
+        this.addPoint(mbr.getMinPoint());
         // TODO: how to compare here???
         // put inside or intersect, or above, or under
 
@@ -137,5 +139,15 @@ public class MBR implements Serializable{
     @Override
     public String toString() {
         return "MBR: Min" + this.minPoint.toString() + " - Max" + this.getMaxPoint().toString();
+    }
+
+    public double calculateDistance(Point point){
+        double distance = 0L;
+        for(int i =0; i< nbDimension; i++){
+            float center = (this.maxPoint.getDimension(i) + this.minPoint.getDimension(i)) /2;
+            float distanceL1 = center - point.getDimension(i);
+            distance = distance + Math.pow(distanceL1, 2);
+        }
+        return Math.sqrt(distance);
     }
 }

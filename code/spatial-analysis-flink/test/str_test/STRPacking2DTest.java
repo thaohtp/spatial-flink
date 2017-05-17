@@ -2,14 +2,13 @@ package str_test;
 
 import flink.RTree;
 import flink.STRPacking;
-import flink.datatype.LeafNode;
+import flink.datatype.PointLeafNode;
 import flink.datatype.Point;
 import flink.datatype.RTreeNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Assert;
 import org.junit.Test;
-import scala.collection.mutable.Leaf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -112,22 +111,22 @@ public class STRPacking2DTest {
         Assert.assertEquals("Test number of leaves", nbLeaf, leafNodes.size());
 
         // test each leaves
-        LeafNode expLeafNode1 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
-        expLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
-        expLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
-        Assert.assertEquals("Test leaf 1", expLeafNode1, leafNodes.get(0));
+        PointLeafNode expPointLeafNode1 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
+        Assert.assertEquals("Test leaf 1", expPointLeafNode1, leafNodes.get(0));
 
 
-        LeafNode expLeafNode2 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
-        expLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
-        expLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
-        Assert.assertEquals("Test leaf 2", expLeafNode2, leafNodes.get(1));
+        PointLeafNode expPointLeafNode2 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
+        Assert.assertEquals("Test leaf 2", expPointLeafNode2, leafNodes.get(1));
 
         // test MBR values
-        Assert.assertEquals("Test MBR of leaf 1", expLeafNode1.getMbr(), leafNodes.get(0).getMbr());
-        Assert.assertEquals("Test MBR of leaf 2", expLeafNode2.getMbr(), leafNodes.get(1).getMbr());
+        Assert.assertEquals("Test MBR of leaf 1", expPointLeafNode1.getMbr(), leafNodes.get(0).getMbr());
+        Assert.assertEquals("Test MBR of leaf 2", expPointLeafNode2.getMbr(), leafNodes.get(1).getMbr());
 
     }
 
@@ -145,27 +144,27 @@ public class STRPacking2DTest {
         Assert.assertEquals("Test number of leaves", nbLeaf, leafNodes.size());
 
         // test each leaves
-        LeafNode expLeafNode1 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
-        expLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
-        expLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
-        Assert.assertEquals("Test leaf 1", expLeafNode1, leafNodes.get(0));
+        PointLeafNode expPointLeafNode1 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
+        Assert.assertEquals("Test leaf 1", expPointLeafNode1, leafNodes.get(0));
 
 
-        LeafNode expLeafNode2 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
-        expLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
-        expLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
-        Assert.assertEquals("Test leaf 2", expLeafNode2, leafNodes.get(1));
+        PointLeafNode expPointLeafNode2 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
+        Assert.assertEquals("Test leaf 2", expPointLeafNode2, leafNodes.get(1));
 
-        LeafNode expLeafNode3 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode3.addPoint(TestUtil.create2DPoint(11,10));
-        Assert.assertEquals("Test leaf 3", expLeafNode3, leafNodes.get(2));
+        PointLeafNode expPointLeafNode3 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode3.addPoint(TestUtil.create2DPoint(11,10));
+        Assert.assertEquals("Test leaf 3", expPointLeafNode3, leafNodes.get(2));
 
         // test MBR values
-        Assert.assertEquals("Test MBR of leaf 1", expLeafNode1.getMbr(), leafNodes.get(0).getMbr());
-        Assert.assertEquals("Test MBR of leaf 2", expLeafNode2.getMbr(), leafNodes.get(1).getMbr());
-        Assert.assertEquals("Test MBR of leaf 3", expLeafNode3.getMbr(), leafNodes.get(2).getMbr());
+        Assert.assertEquals("Test MBR of leaf 1", expPointLeafNode1.getMbr(), leafNodes.get(0).getMbr());
+        Assert.assertEquals("Test MBR of leaf 2", expPointLeafNode2.getMbr(), leafNodes.get(1).getMbr());
+        Assert.assertEquals("Test MBR of leaf 3", expPointLeafNode3.getMbr(), leafNodes.get(2).getMbr());
     }
 
     @Test
@@ -182,28 +181,28 @@ public class STRPacking2DTest {
         Assert.assertEquals("Test number of leaves", nbLeaf, leafNodes.size());
 
         // test each leaves
-        LeafNode expLeafNode1 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
-        expLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
-        expLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
-        Assert.assertEquals("Test leaf 1", expLeafNode1, leafNodes.get(0));
+        PointLeafNode expPointLeafNode1 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
+        Assert.assertEquals("Test leaf 1", expPointLeafNode1, leafNodes.get(0));
 
 
-        LeafNode expLeafNode2 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
-        expLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
-        expLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
-        Assert.assertEquals("Test leaf 2", expLeafNode2, leafNodes.get(1));
+        PointLeafNode expPointLeafNode2 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
+        Assert.assertEquals("Test leaf 2", expPointLeafNode2, leafNodes.get(1));
 
-        LeafNode expLeafNode3 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode3.addPoint(TestUtil.create2DPoint(12,-10));
-        expLeafNode3.addPoint(TestUtil.create2DPoint(11,10));
-        Assert.assertEquals("Test leaf 3", expLeafNode3, leafNodes.get(2));
+        PointLeafNode expPointLeafNode3 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode3.addPoint(TestUtil.create2DPoint(12,-10));
+        expPointLeafNode3.addPoint(TestUtil.create2DPoint(11,10));
+        Assert.assertEquals("Test leaf 3", expPointLeafNode3, leafNodes.get(2));
 
         // test MBR values
-        Assert.assertEquals("Test MBR of leaf 1", expLeafNode1.getMbr(), leafNodes.get(0).getMbr());
-        Assert.assertEquals("Test MBR of leaf 2", expLeafNode2.getMbr(), leafNodes.get(1).getMbr());
-        Assert.assertEquals("Test MBR of leaf 3", expLeafNode3.getMbr(), leafNodes.get(2).getMbr());
+        Assert.assertEquals("Test MBR of leaf 1", expPointLeafNode1.getMbr(), leafNodes.get(0).getMbr());
+        Assert.assertEquals("Test MBR of leaf 2", expPointLeafNode2.getMbr(), leafNodes.get(1).getMbr());
+        Assert.assertEquals("Test MBR of leaf 3", expPointLeafNode3.getMbr(), leafNodes.get(2).getMbr());
     }
 
     @Test
@@ -220,33 +219,33 @@ public class STRPacking2DTest {
         Assert.assertEquals("Test number of leaves", nbLeaf, leafNodes.size());
 
         // test each leaves
-        LeafNode expLeafNode1 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
-        expLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
-        expLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
-        Assert.assertEquals("Test leaf 1", expLeafNode1, leafNodes.get(0));
+        PointLeafNode expPointLeafNode1 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
+        Assert.assertEquals("Test leaf 1", expPointLeafNode1, leafNodes.get(0));
 
 
-        LeafNode expLeafNode2 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
-        expLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
-        expLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
-        Assert.assertEquals("Test leaf 2", expLeafNode2, leafNodes.get(1));
+        PointLeafNode expPointLeafNode2 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
+        Assert.assertEquals("Test leaf 2", expPointLeafNode2, leafNodes.get(1));
 
-        LeafNode expLeafNode3 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode3.addPoint(TestUtil.create2DPoint(12,-10));
-        expLeafNode3.addPoint(TestUtil.create2DPoint(11,10));
-        expLeafNode3.addPoint(TestUtil.create2DPoint(11,11));
-        Assert.assertEquals("Test leaf 3", expLeafNode3, leafNodes.get(2));
+        PointLeafNode expPointLeafNode3 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode3.addPoint(TestUtil.create2DPoint(12,-10));
+        expPointLeafNode3.addPoint(TestUtil.create2DPoint(11,10));
+        expPointLeafNode3.addPoint(TestUtil.create2DPoint(11,11));
+        Assert.assertEquals("Test leaf 3", expPointLeafNode3, leafNodes.get(2));
 
-//        LeafNode expLeafNode4 = new LeafNode(this.NB_DIMENSION);
+//        PointLeafNode expLeafNode4 = new PointLeafNode(this.NB_DIMENSION);
 //        expLeafNode4.addPoint(TestUtil.create2DPoint(15,8));
 //        Assert.assertEquals("Test leaf 4", expLeafNode4, leafNodes.get(3));
 
         // test MBR values
-        Assert.assertEquals("Test MBR of leaf 1", expLeafNode1.getMbr(), leafNodes.get(0).getMbr());
-        Assert.assertEquals("Test MBR of leaf 2", expLeafNode2.getMbr(), leafNodes.get(1).getMbr());
-        Assert.assertEquals("Test MBR of leaf 3", expLeafNode3.getMbr(), leafNodes.get(2).getMbr());
+        Assert.assertEquals("Test MBR of leaf 1", expPointLeafNode1.getMbr(), leafNodes.get(0).getMbr());
+        Assert.assertEquals("Test MBR of leaf 2", expPointLeafNode2.getMbr(), leafNodes.get(1).getMbr());
+        Assert.assertEquals("Test MBR of leaf 3", expPointLeafNode3.getMbr(), leafNodes.get(2).getMbr());
 //        Assert.assertEquals("Test MBR of leaf 4", expLeafNode4.getMbr(), leafNodes.get(3).getMbr());
     }
 
@@ -264,36 +263,36 @@ public class STRPacking2DTest {
         Assert.assertEquals("Test number of leaves", nbLeaf, leafNodes.size());
 
         // test each leaves
-        LeafNode expLeafNode1 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
-        expLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
-        expLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
-        Assert.assertEquals("Test leaf 1", expLeafNode1, leafNodes.get(0));
+        PointLeafNode expPointLeafNode1 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
+        expPointLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
+        Assert.assertEquals("Test leaf 1", expPointLeafNode1, leafNodes.get(0));
 
 
-        LeafNode expLeafNode2 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
-        expLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
-        expLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
-        Assert.assertEquals("Test leaf 2", expLeafNode2, leafNodes.get(1));
+        PointLeafNode expPointLeafNode2 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
+        expPointLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
+        Assert.assertEquals("Test leaf 2", expPointLeafNode2, leafNodes.get(1));
 
-        LeafNode expLeafNode3 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode3.addPoint(TestUtil.create2DPoint(12,-10));
-        expLeafNode3.addPoint(TestUtil.create2DPoint(15,8));
-        expLeafNode3.addPoint(TestUtil.create2DPoint(11,10));
-        Assert.assertEquals("Test leaf 3", expLeafNode3, leafNodes.get(2));
+        PointLeafNode expPointLeafNode3 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode3.addPoint(TestUtil.create2DPoint(12,-10));
+        expPointLeafNode3.addPoint(TestUtil.create2DPoint(15,8));
+        expPointLeafNode3.addPoint(TestUtil.create2DPoint(11,10));
+        Assert.assertEquals("Test leaf 3", expPointLeafNode3, leafNodes.get(2));
 
-        LeafNode expLeafNode4 = new LeafNode(this.NB_DIMENSION);
-        expLeafNode4.addPoint(TestUtil.create2DPoint(11,11));
-        Assert.assertEquals("Test leaf 4", expLeafNode4, leafNodes.get(3));
+        PointLeafNode expPointLeafNode4 = new PointLeafNode(this.NB_DIMENSION);
+        expPointLeafNode4.addPoint(TestUtil.create2DPoint(11,11));
+        Assert.assertEquals("Test leaf 4", expPointLeafNode4, leafNodes.get(3));
 
-//        Assert.assertEquals("Test leaf 3", expLeafNode3, leafNodes.get(2));
+//        Assert.assertEquals("Test leaf 3", expPointLeafNode3, leafNodes.get(2));
 
         // test MBR values
-        Assert.assertEquals("Test MBR of leaf 1", expLeafNode1.getMbr(), leafNodes.get(0).getMbr());
-        Assert.assertEquals("Test MBR of leaf 2", expLeafNode2.getMbr(), leafNodes.get(1).getMbr());
-        Assert.assertEquals("Test MBR of leaf 3", expLeafNode3.getMbr(), leafNodes.get(2).getMbr());
-        Assert.assertEquals("Test MBR of leaf 4", expLeafNode4.getMbr(), leafNodes.get(3).getMbr());
+        Assert.assertEquals("Test MBR of leaf 1", expPointLeafNode1.getMbr(), leafNodes.get(0).getMbr());
+        Assert.assertEquals("Test MBR of leaf 2", expPointLeafNode2.getMbr(), leafNodes.get(1).getMbr());
+        Assert.assertEquals("Test MBR of leaf 3", expPointLeafNode3.getMbr(), leafNodes.get(2).getMbr());
+        Assert.assertEquals("Test MBR of leaf 4", expPointLeafNode4.getMbr(), leafNodes.get(3).getMbr());
     }
 
 

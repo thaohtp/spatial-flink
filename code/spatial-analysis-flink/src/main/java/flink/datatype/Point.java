@@ -76,6 +76,15 @@ public class Point implements Key<Point>{
         return this;
     }
 
+    public Point divide(float division){
+        for(int i =0; i< this.values.size(); i++){
+            float currentVal = this.values.get(i);
+            currentVal = currentVal / division;
+            this.values.set(i, currentVal);
+        }
+        return this;
+    }
+
     public int getNbDimension() {
         return this.values.size();
     }

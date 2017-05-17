@@ -92,13 +92,13 @@ public class STRPacking {
     }
 
 
-    public RTree createGlobalRTree(List<PartitionPoint> pointList) throws Exception {
+    public RTree createGlobalRTree(List<PartitionedMBR> mbrList) throws Exception {
         // 1. Pack points into leaf node
-        List<SliceIndex> sliceIndexList = sortPartitionPoints(pointList, 0, pointList.size(), this.pointPerNode, 0, this.nbDimension, this.nbDimension);
+        List<SliceIndex> sliceIndexList = sortPartitionPoints(mbrList, 0, mbrList.size(), this.pointPerNode, 0, this.nbDimension, this.nbDimension);
         List<RTreeNode> leafNodes = new ArrayList<RTreeNode>();
         for(int i = 0; i < sliceIndexList.size(); i++){
             SliceIndex slice = sliceIndexList.get(i);
-            List<PartitionPoint> subList = pointList.subList(slice.getStartIndex(), slice.getEndIndex());
+            List<PartitionedMBR> subList = mbrList.subList(slice.getStartIndex(), slice.getEndIndex());
             List<RTreeNode> treeNodes = packGlobalLeafNode(subList, this.pointPerNode, this.nbDimension-1, true);
             leafNodes.addAll(treeNodes);
         }
@@ -235,7 +235,7 @@ public class STRPacking {
 
     /**
      * Sort given points into slabs
-     * @param points data points
+     * @param mbrList data points
      * @param startIndex index of start point
      * @param endIndex index of end point (end index is exclusive)
      * @param nbPointsPerNode capacity of one node
@@ -244,7 +244,7 @@ public class STRPacking {
      * @param k recursively dimension to divide into slabs
      * @return List of SliceIndex
      */
-    private List<SliceIndex> sortPartitionPoints(List<PartitionPoint> points, int startIndex, int endIndex, int nbPointsPerNode, final int currentDimension, int nbDimension, int k){
+    private List<SliceIndex> sortPartitionPoints(List<PartitionedMBR> mbrList, int startIndex, int endIndex, int nbPointsPerNode, final int currentDimension, int nbDimension, int k){
 
         // reach final dimension then stop sorting recursively
         if(currentDimension == nbDimension){
@@ -264,10 +264,10 @@ public class STRPacking {
 //        int slabSize = (int) Math.floor(r / nbSlabs);
 
         // Sort the range
-        List<PartitionPoint> subList = points.subList(startIndex, endIndex);
-        Collections.sort(subList, new Comparator<PartitionPoint>() {
+        List<PartitionedMBR> subList = mbrList.subList(startIndex, endIndex);
+        Collections.sort(subList, new Comparator<PartitionedMBR>() {
             @Override
-            public int compare(PartitionPoint o1, PartitionPoint o2) {
+            public int compare(PartitionedMBR o1, PartitionedMBR o2) {
                 return o1.getMbr().compare(o2.getMbr(), currentDimension);
             }
         });
@@ -277,7 +277,7 @@ public class STRPacking {
         for(int i =0; i < nbSlabs - 1; i++){
             int startSubIndex = startIndex + i * slabSize;
             int endSubIndex = startIndex + (i+1) * slabSize;
-            sliceIndices.addAll(sortPartitionPoints(points, startSubIndex, endSubIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
+            sliceIndices.addAll(sortPartitionPoints(mbrList, startSubIndex, endSubIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
         }
 
         // Calculate start-end index of final slab
@@ -285,7 +285,7 @@ public class STRPacking {
         if(sliceIndices.size() != 0){
             finalStartSubIndex = sliceIndices.get(sliceIndices.size() -1).getEndIndex();
         }
-        sliceIndices.addAll(sortPartitionPoints(points, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
+        sliceIndices.addAll(sortPartitionPoints(mbrList, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
 
         return sliceIndices;
     }
@@ -309,7 +309,7 @@ public class STRPacking {
 
             RTreeNode parentNode = null;
             if(isLeaf){
-                parentNode = new LeafNode(this.nbDimension);
+                parentNode = new PointLeafNode(this.nbDimension);
             }
             else{
                 parentNode = new NonLeafNode(this.nbDimension);
@@ -326,7 +326,7 @@ public class STRPacking {
         int startIndex = result.size();
         RTreeNode finalParentNode = null;
         if(isLeaf){
-            finalParentNode = new LeafNode(this.nbDimension);
+            finalParentNode = new PointLeafNode(this.nbDimension);
         }
         else{
             finalParentNode = new NonLeafNode(this.nbDimension);
@@ -352,7 +352,7 @@ public class STRPacking {
 
             RTreeNode parentNode = null;
             if(isLeaf){
-                parentNode = new LeafNode(this.nbDimension);
+                parentNode = new PointLeafNode(this.nbDimension);
             }
             else{
                 parentNode = new NonLeafNode(this.nbDimension);
@@ -369,7 +369,7 @@ public class STRPacking {
         int startIndex = result.size();
         RTreeNode finalParentNode = null;
         if(isLeaf){
-            finalParentNode = new LeafNode(this.nbDimension);
+            finalParentNode = new PointLeafNode(this.nbDimension);
         }
         else{
             finalParentNode = new NonLeafNode(this.nbDimension);
@@ -385,8 +385,8 @@ public class STRPacking {
 
 
     // TODO: refactor here, not good solution
-    private List<RTreeNode> packGlobalLeafNode(List<PartitionPoint> points, int nbPointPerNode, final int compareDim, boolean isLeaf) throws Exception {
-        int nbMBR = (int) Math.ceil(points.size() * 1.0/nbPointPerNode);
+    private List<RTreeNode> packGlobalLeafNode(List<PartitionedMBR> mbrList, int nbPointPerNode, final int compareDim, boolean isLeaf) throws Exception {
+        int nbMBR = (int) Math.ceil(mbrList.size() * 1.0/nbPointPerNode);
         List<RTreeNode> result = new ArrayList<RTreeNode>();
         for(int i =0; i<nbMBR - 1; i++){
             // calculate start-end index to pack nodes into MBR
@@ -395,14 +395,14 @@ public class STRPacking {
 
             RTreeNode parentNode = null;
             if(isLeaf){
-                parentNode = new GlobalLeafNode(this.nbDimension);
+                parentNode = new MBRLeafNode(this.nbDimension);
             }
             else{
                 parentNode = new NonLeafNode(this.nbDimension);
             }
 
             for(int j = startIndex; j<endIndex; j++){
-                PartitionPoint childPoint = points.get(j);
+                PartitionedMBR childPoint = mbrList.get(j);
                 parentNode.insert(childPoint);
             }
             result.add(parentNode);
@@ -412,13 +412,13 @@ public class STRPacking {
         int startIndex = result.size();
         RTreeNode finalParentNode = null;
         if(isLeaf){
-            finalParentNode = new GlobalLeafNode(this.nbDimension);
+            finalParentNode = new MBRLeafNode(this.nbDimension);
         }
         else{
             finalParentNode = new NonLeafNode(this.nbDimension);
         }
-        for(int i = startIndex; i< points.size(); i++){
-            PartitionPoint childNode = points.get(i);
+        for(int i = startIndex; i< mbrList.size(); i++){
+            PartitionedMBR childNode = mbrList.get(i);
             finalParentNode.insert(childNode);
         }
         result.add(finalParentNode);

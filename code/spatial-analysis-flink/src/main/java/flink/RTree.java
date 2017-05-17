@@ -1,11 +1,7 @@
 package flink;
 
-import com.sun.org.apache.xerces.internal.dom.ChildNode;
-import flink.datatype.GlobalLeafNode;
-import flink.datatype.NonLeafNode;
 import flink.datatype.Point;
 import flink.datatype.RTreeNode;
-import org.apache.avro.generic.GenericData;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -82,6 +78,25 @@ public class RTree implements Serializable{
                 for(int i =0; i<childNodes.size(); i++){
                     result.addAll(searchNodes(childNodes.get(i), point));
                 }
+            }
+        }
+        return result;
+    }
+
+    public List<RTreeNode> getLeafNodes(){
+        return searchLeafNodes(this.rootNode);
+    }
+
+    private List<RTreeNode> searchLeafNodes(RTreeNode node){
+        List<RTreeNode> result = new ArrayList<RTreeNode>();
+        List<RTreeNode> childNodes = node.getChildNodes();
+        if(childNodes.get(0).isLeaf()){
+            result.addAll(node.getChildNodes());
+            return result;
+        }
+        else{
+            for(int i =0; i< childNodes.size(); i++){
+                result.addAll(searchLeafNodes(childNodes.get(i)));
             }
         }
         return result;
