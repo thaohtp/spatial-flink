@@ -1,4 +1,6 @@
-package flink.datatype;
+package flink.util;
+
+import flink.datatype.Point;
 
 import java.util.Comparator;
 

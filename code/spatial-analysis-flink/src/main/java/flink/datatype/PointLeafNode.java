@@ -1,12 +1,13 @@
 package flink.datatype;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by JML on 3/31/17.
  */
-public class PointLeafNode extends RTreeNode{
+public class PointLeafNode extends RTreeNode implements Serializable{
 
     private List<Point> pointList;
 
@@ -15,8 +16,6 @@ public class PointLeafNode extends RTreeNode{
         this.pointList = new ArrayList<Point>();
     }
 
-    //TODO: For leaf node, what should be the pointer
-    // Consider then add another list instead of List of Node
     public PointLeafNode(int nbDimension, MBR mbr, List<Point> childNodes){
         super(nbDimension, mbr, true);
         this.pointList = childNodes;

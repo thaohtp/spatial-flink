@@ -94,12 +94,12 @@ public class STRPacking {
 
     public RTree createGlobalRTree(List<PartitionedMBR> mbrList) throws Exception {
         // 1. Pack points into leaf node
-        List<SliceIndex> sliceIndexList = sortPartitionPoints(mbrList, 0, mbrList.size(), this.pointPerNode, 0, this.nbDimension, this.nbDimension);
+        List<SliceIndex> sliceIndexList = sortPartitionedMBRs(mbrList, 0, mbrList.size(), this.pointPerNode, 0, this.nbDimension, this.nbDimension);
         List<RTreeNode> leafNodes = new ArrayList<RTreeNode>();
         for(int i = 0; i < sliceIndexList.size(); i++){
             SliceIndex slice = sliceIndexList.get(i);
             List<PartitionedMBR> subList = mbrList.subList(slice.getStartIndex(), slice.getEndIndex());
-            List<RTreeNode> treeNodes = packGlobalLeafNode(subList, this.pointPerNode, this.nbDimension-1, true);
+            List<RTreeNode> treeNodes = packMBRLeafNode(subList, this.pointPerNode, this.nbDimension-1, true);
             leafNodes.addAll(treeNodes);
         }
 
@@ -244,7 +244,7 @@ public class STRPacking {
      * @param k recursively dimension to divide into slabs
      * @return List of SliceIndex
      */
-    private List<SliceIndex> sortPartitionPoints(List<PartitionedMBR> mbrList, int startIndex, int endIndex, int nbPointsPerNode, final int currentDimension, int nbDimension, int k){
+    private List<SliceIndex> sortPartitionedMBRs(List<PartitionedMBR> mbrList, int startIndex, int endIndex, int nbPointsPerNode, final int currentDimension, int nbDimension, int k){
 
         // reach final dimension then stop sorting recursively
         if(currentDimension == nbDimension){
@@ -277,7 +277,7 @@ public class STRPacking {
         for(int i =0; i < nbSlabs - 1; i++){
             int startSubIndex = startIndex + i * slabSize;
             int endSubIndex = startIndex + (i+1) * slabSize;
-            sliceIndices.addAll(sortPartitionPoints(mbrList, startSubIndex, endSubIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
+            sliceIndices.addAll(sortPartitionedMBRs(mbrList, startSubIndex, endSubIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
         }
 
         // Calculate start-end index of final slab
@@ -285,7 +285,7 @@ public class STRPacking {
         if(sliceIndices.size() != 0){
             finalStartSubIndex = sliceIndices.get(sliceIndices.size() -1).getEndIndex();
         }
-        sliceIndices.addAll(sortPartitionPoints(mbrList, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
+        sliceIndices.addAll(sortPartitionedMBRs(mbrList, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
 
         return sliceIndices;
     }
@@ -385,7 +385,7 @@ public class STRPacking {
 
 
     // TODO: refactor here, not good solution
-    private List<RTreeNode> packGlobalLeafNode(List<PartitionedMBR> mbrList, int nbPointPerNode, final int compareDim, boolean isLeaf) throws Exception {
+    private List<RTreeNode> packMBRLeafNode(List<PartitionedMBR> mbrList, int nbPointPerNode, final int compareDim, boolean isLeaf) throws Exception {
         int nbMBR = (int) Math.ceil(mbrList.size() * 1.0/nbPointPerNode);
         List<RTreeNode> result = new ArrayList<RTreeNode>();
         for(int i =0; i<nbMBR - 1; i++){

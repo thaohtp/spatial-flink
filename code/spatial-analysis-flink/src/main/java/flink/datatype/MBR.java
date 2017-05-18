@@ -67,11 +67,6 @@ public class MBR implements Serializable{
                 this.maxPoint.setDimension(point.getDimension(i), i);
                 this.minPoint.setDimension(point.getDimension(i), i);
             }
-//            this.maxPoint.setX(point.getX());
-//            this.maxPoint.setY(point.getY());
-//            this.minPoint.setX(point.getX());
-//            this.minPoint.setY(point.getY());
-//            this.minPoint = point;
             this.isInitialized = false;
         }
         if(this.contains(point)){

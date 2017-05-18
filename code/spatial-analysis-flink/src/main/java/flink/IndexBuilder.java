@@ -4,6 +4,7 @@ import flink.datatype.*;
 import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.MapPartitionFunction;
+import org.apache.flink.api.common.functions.RichGroupReduceFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.functions.KeySelector;
@@ -39,7 +40,6 @@ public class IndexBuilder implements Serializable{
 
         IndexBuilder builder = new IndexBuilder();
         builder.buildIndex(data, 2, 3, 0.5, 4);
-
     }
 
 
@@ -97,69 +97,36 @@ public class IndexBuilder implements Serializable{
             }
         });
 
+        // TODO: Remove here after testing
+        globalRTree.print();
         localRTree.print();
-//        partitionedData.print();
 
     }
 
-    public STRPartitioner createSTRPartitioner(DataSet<Point> data, int nbDimension, int maxNodePerEntry, double sampleRate, int parallelism) throws Exception {
+    public STRPartitioner createSTRPartitioner(DataSet<Point> data, final int nbDimension, final int maxNodePerEntry, double sampleRate, final int parallelism) throws Exception {
         // Sample data
         boolean withReplacement = false;
-        List<Point> sampleData = null;
-        try {
-             sampleData = DataSetUtils.sample(data, withReplacement, sampleRate).collect();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        DataSet<Point> sampleData = DataSetUtils.sample(data, withReplacement, sampleRate);
 
-        // calculate number nodes per entry
-        int maxNumberMBR = parallelism;
-        double nbNodePerEntry = Math.ceil(sampleData.size() / maxNumberMBR);
-        if(nbNodePerEntry == 0 ){
-            nbNodePerEntry = 1;
-        }
-
-        // Sort and pack points to create MBRs
-        List<SliceIndex> sliceIndexList = sortPoints(sampleData, 0, sampleData.size(), nbNodePerEntry, 0, nbDimension, nbDimension);
-        List<MBR> mbrBounds = new ArrayList<MBR>();
-        for(int i = 0; i < sliceIndexList.size(); i++){
-            SliceIndex slice = sliceIndexList.get(i);
-            List<Point> subList = sampleData.subList(slice.getStartIndex(), slice.getEndIndex());
-            List<MBR> mbrs = calculateMBR(subList, nbDimension, nbNodePerEntry);
-            mbrBounds.addAll(mbrs);
-        }
-
-        // From MBR, create partition points (MBR, partition). The idea is to distribute each MBR to each partition
-        List<PartitionedMBR> partitionedMBRs = new ArrayList<PartitionedMBR>(mbrBounds.size());
-        for(int i =0; i<mbrBounds.size(); i++){
-            // TODO: i% MBR to make sure, partitionnumber is not out of index bound
-            PartitionedMBR ppoint = new PartitionedMBR(mbrBounds.get(i), i % maxNumberMBR);
-            partitionedMBRs.add(ppoint);
-        }
-        RTree rTree = createGlobalRTree(partitionedMBRs, nbDimension, maxNodePerEntry);
-        return new STRPartitioner(rTree);
-    }
-
-
-    public STRPartitioner createSTRPartitioner2(DataSet<Point> data, final int nbDimension, final int maxNodePerEntry, double sampleRate, final int parallelism) throws Exception {
-        boolean withReplacement = false;
-        final DataSet<Point> sampleData = DataSetUtils.sample(data, withReplacement, sampleRate);
-
-        DataSet<RTree> rTree = sampleData.reduceGroup(new GroupReduceFunction<Point, RTree>() {
+        DataSet<RTree> rTrees = sampleData.reduceGroup(new RichGroupReduceFunction<Point, RTree>() {
             @Override
             public void reduce(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
-                Iterator<Point> pointIter = iterable.iterator();
                 List<Point> samplePoints = new ArrayList<Point>();
-                while(pointIter.hasNext()){
-                    samplePoints.add(pointIter.next());
+                Iterator<Point> iter = iterable.iterator();
+                while (iter.hasNext()) {
+                    samplePoints.add(iter.next());
                 }
 
-                int maxMBR = parallelism;
-                double nbNodePerEntry = Math.ceil(samplePoints.size() / maxMBR);
-                if(nbNodePerEntry == 0){
-                    nbNodePerEntry =1;
+                System.out.println("Sample size: " + samplePoints.size() );
+
+                // calculate number nodes per entry
+                int maxNumberMBR = parallelism;
+                double nbNodePerEntry = Math.ceil(samplePoints.size() / maxNumberMBR);
+                if(nbNodePerEntry == 0 ){
+                    nbNodePerEntry = 1;
                 }
 
+                // Sort and pack points to create MBRs
                 List<SliceIndex> sliceIndexList = sortPoints(samplePoints, 0, samplePoints.size(), nbNodePerEntry, 0, nbDimension, nbDimension);
                 List<MBR> mbrBounds = new ArrayList<MBR>();
                 for(int i = 0; i < sliceIndexList.size(); i++){
@@ -169,19 +136,19 @@ public class IndexBuilder implements Serializable{
                     mbrBounds.addAll(mbrs);
                 }
 
+                // From MBR, create partition points (MBR, partition). The idea is to distribute each MBR to each partition
                 List<PartitionedMBR> partitionedMBRs = new ArrayList<PartitionedMBR>(mbrBounds.size());
                 for(int i =0; i<mbrBounds.size(); i++){
-                    PartitionedMBR ppoint = new PartitionedMBR(mbrBounds.get(i), i);
-                    partitionedMBRs.add(ppoint);
+                    // TODO: i% MBR to make sure, partitionnumber is not out of index bound
+                    PartitionedMBR mbr = new PartitionedMBR(mbrBounds.get(i), i % maxNumberMBR);
+                    partitionedMBRs.add(mbr);
                 }
                 RTree rTree = createGlobalRTree(partitionedMBRs, nbDimension, maxNodePerEntry);
                 collector.collect(rTree);
             }
         });
 
-
-//        return new STRPartitioner(rTree.collect().get(0));
-        return null;
+        return new STRPartitioner(rTrees.collect().get(0));
     }
 
     /**
@@ -241,6 +208,14 @@ public class IndexBuilder implements Serializable{
         return sliceIndices;
     }
 
+    /**
+     * This method is used for calculating MBR after sorting. This method does not pack points into node.
+     * @param points
+     * @param nbDimension
+     * @param nbPointPerNode
+     * @return
+     * @throws Exception
+     */
     private List<MBR> calculateMBR(List<Point> points, int nbDimension, double nbPointPerNode) throws Exception {
         int nbMBR = (int) Math.ceil(points.size() * 1.0/nbPointPerNode);
         List<MBR> result = new ArrayList<MBR>();
@@ -270,8 +245,7 @@ public class IndexBuilder implements Serializable{
         return result;
     }
 
-    // TODO: refactor here, not good solution
-    private List<RTreeNode> packGlobalLeafNode(List<PartitionedMBR> points, int nbDimension, int nbPointPerNode, boolean isLeaf) throws Exception {
+    private List<RTreeNode> packMBRLeafNodes(List<PartitionedMBR> points, int nbDimension, int nbPointPerNode, boolean isLeaf) throws Exception {
         int nbMBR = (int) Math.ceil(points.size() * 1.0/nbPointPerNode);
         List<RTreeNode> result = new ArrayList<RTreeNode>();
         for(int i =0; i<nbMBR - 1; i++){
@@ -311,7 +285,6 @@ public class IndexBuilder implements Serializable{
         finalParentNode.insert(startNode);
         finalParentNode.setMbr(startNode.getMbr());
 
-
         for(int i = startIndex+1; i< points.size(); i++){
             PartitionedMBR childNode = points.get(i);
             finalParentNode.insert(childNode);
@@ -321,23 +294,29 @@ public class IndexBuilder implements Serializable{
         return result;
     }
 
-
-
+    /**
+     * This method is used to pack global Rtree. Global RTree contains Entry<MBR,Partition number> instead of Points.
+     * @param mbrList
+     * @param nbDimension
+     * @param pointPerNode
+     * @return
+     * @throws Exception
+     */
     public RTree createGlobalRTree(List<PartitionedMBR> mbrList, int nbDimension, int pointPerNode) throws Exception {
         // 1. Pack points into leaf node
-        List<SliceIndex> sliceIndexList = sortPartitionPoints(mbrList, 0, mbrList.size(), pointPerNode, 0, nbDimension, nbDimension);
+        List<SliceIndex> sliceIndexList = sortPartitionedMBRs(mbrList, 0, mbrList.size(), pointPerNode, 0, nbDimension, nbDimension);
         List<RTreeNode> leafNodes = new ArrayList<RTreeNode>();
         for(int i = 0; i < sliceIndexList.size(); i++){
             SliceIndex slice = sliceIndexList.get(i);
             List<PartitionedMBR> subList = mbrList.subList(slice.getStartIndex(), slice.getEndIndex());
-            List<RTreeNode> treeNodes = packGlobalLeafNode(subList, nbDimension, pointPerNode, true);
+            List<RTreeNode> treeNodes = packMBRLeafNodes(subList, nbDimension, pointPerNode, true);
             leafNodes.addAll(treeNodes);
         }
 
         // 2. Pack leaf nodes into non-leaf nodes. Pack bottom - up until we get only one root node
         List<RTreeNode> nonLeafNode = null;
         do{
-            List<SliceIndex> sliceIndexOfNodes = sortRTreeNode(leafNodes, 0, leafNodes.size(), pointPerNode, 0, nbDimension, nbDimension);
+            List<SliceIndex> sliceIndexOfNodes = sortRTreeNodes(leafNodes, 0, leafNodes.size(), pointPerNode, 0, nbDimension, nbDimension);
             nonLeafNode = new ArrayList<RTreeNode>();
             for(int i = 0; i < sliceIndexOfNodes.size(); i++){
                 SliceIndex slice = sliceIndexOfNodes.get(i);
@@ -364,7 +343,7 @@ public class IndexBuilder implements Serializable{
      * @param k recursively dimension to divide into slabs
      * @return List of SliceIndex
      */
-    private List<SliceIndex> sortPartitionPoints(List<PartitionedMBR> mbrList, int startIndex, int endIndex, int nbPointsPerNode, final int currentDimension, int nbDimension, int k){
+    private List<SliceIndex> sortPartitionedMBRs(List<PartitionedMBR> mbrList, int startIndex, int endIndex, int nbPointsPerNode, final int currentDimension, int nbDimension, int k){
 
         // reach final dimension then stop sorting recursively
         if(currentDimension == nbDimension){
@@ -397,7 +376,7 @@ public class IndexBuilder implements Serializable{
         for(int i =0; i < nbSlabs - 1; i++){
             int startSubIndex = startIndex + i * slabSize;
             int endSubIndex = startIndex + (i+1) * slabSize;
-            sliceIndices.addAll(sortPartitionPoints(mbrList, startSubIndex, endSubIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
+            sliceIndices.addAll(sortPartitionedMBRs(mbrList, startSubIndex, endSubIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
         }
 
         // Calculate start-end index of final slab
@@ -405,7 +384,7 @@ public class IndexBuilder implements Serializable{
         if(sliceIndices.size() != 0){
             finalStartSubIndex = sliceIndices.get(sliceIndices.size() -1).getEndIndex();
         }
-        sliceIndices.addAll(sortPartitionPoints(mbrList, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
+        sliceIndices.addAll(sortPartitionedMBRs(mbrList, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
 
         return sliceIndices;
     }
@@ -480,7 +459,7 @@ public class IndexBuilder implements Serializable{
      * @param k recursively dimension to divide into slabs
      * @return
      */
-    private List<SliceIndex> sortRTreeNode(List<RTreeNode> nodes, int startIndex, int endIndex, int nbPointsPerNode, final int currentDimension, int nbDimension, int k){
+    private List<SliceIndex> sortRTreeNodes(List<RTreeNode> nodes, int startIndex, int endIndex, int nbPointsPerNode, final int currentDimension, int nbDimension, int k){
         // reach final dimension then stop sorting recursively
         if(currentDimension == nbDimension){
             List<SliceIndex> sliceIndexList = new ArrayList<SliceIndex>();
@@ -512,7 +491,7 @@ public class IndexBuilder implements Serializable{
         for(int i =0; i < nbSlabs - 1; i++){
             int startSubIndex = startIndex + i * slabSize;
             int endSubIndex = startIndex + (i+1) * slabSize;
-            sliceIndices.addAll(sortRTreeNode(nodes, startSubIndex, endSubIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
+            sliceIndices.addAll(sortRTreeNodes(nodes, startSubIndex, endSubIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
         }
 
         // Calculate start-end index of final slab
@@ -520,7 +499,7 @@ public class IndexBuilder implements Serializable{
         if(sliceIndices.size() != 0){
             finalStartSubIndex = sliceIndices.get(sliceIndices.size() -1).getEndIndex();
         }
-        sliceIndices.addAll(sortRTreeNode(nodes, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
+        sliceIndices.addAll(sortRTreeNodes(nodes, finalStartSubIndex, endIndex, nbPointsPerNode, currentDimension +1, nbDimension, k-1));
 
         return sliceIndices;
     }

@@ -16,8 +16,6 @@ public class MBRLeafNode extends RTreeNode implements Serializable{
         this.partitionedMBRList = new ArrayList<PartitionedMBR>();
     }
 
-    //TODO: For leaf node, what should be the pointer
-    // Consider then add another list instead of List of Node
     public MBRLeafNode(int nbDimension, MBR mbr, List<PartitionedMBR> childNodes){
         super(nbDimension, mbr, true);
         this.partitionedMBRList = childNodes;

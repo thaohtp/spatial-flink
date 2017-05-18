@@ -23,41 +23,6 @@ public class Point implements Key<Point>{
         this.values = values;
     }
 
-//    public Point(float x, float y) {
-//        this.values = new ArrayList<Float>(2);
-//        this.x = x;
-//        this.y = y;
-//        this.values.add(this.x);
-//        this.values.add(this.y);
-//    }
-//
-//    public Point(float x, float y, float z) {
-//        this.values = new ArrayList<Float>(3);
-//        this.x = x;
-//        this.y = y;
-//        this.z = z;
-//
-//        this.values.add(this.x);
-//        this.values.add(this.y);
-//        this.values.add(this.z);
-//    }
-//
-//    public float getX() {
-//        return x;
-//    }
-//
-//    public void setX(float x) {
-//        this.x = x;
-//    }
-//
-//    public float getY() {
-//        return y;
-//    }
-//
-//    public void setY(float y) {
-//        this.y = y;
-//    }
-
     public Point add(Point point) {
         for(int i =0; i< this.values.size(); i++){
             float currentVal = this.values.get(i);
