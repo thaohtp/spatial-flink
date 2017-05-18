@@ -1,7 +1,5 @@
 package flink.datatype;
 
-import flink.RTree;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

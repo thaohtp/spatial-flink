@@ -46,8 +46,8 @@ public class STRPartitioner implements Partitioner<Point> {
         PartitionedMBR chosenPPoint = null;
         double minDistance = Double.MAX_VALUE;
         for(int k =0; k<rTreeNodes.size(); k++){
-            MBRLeafNode MBRLeafNode = (MBRLeafNode) rTreeNodes.get(k);
-            List<PartitionedMBR> partitions = MBRLeafNode.getPartitionedMBRList();
+            MBRLeafNode mbrLeafNode = (MBRLeafNode) rTreeNodes.get(k);
+            List<PartitionedMBR> partitions = mbrLeafNode.getEntries();
             for(int j = 0; j<partitions.size(); j++){
                 PartitionedMBR mbr = partitions.get(j);
                 double distance = mbr.getMbr().calculateDistance(point);
