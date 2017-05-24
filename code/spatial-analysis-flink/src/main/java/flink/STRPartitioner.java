@@ -62,4 +62,12 @@ public class STRPartitioner implements Partitioner<Point> {
         chosenPPoint.getMbr().addPoint(point);
         return chosenPPoint.getPartitionNumber();
     }
+
+    public RTree getrTree() {
+        return rTree;
+    }
+
+    public void setrTree(RTree rTree) {
+        this.rTree = rTree;
+    }
 }

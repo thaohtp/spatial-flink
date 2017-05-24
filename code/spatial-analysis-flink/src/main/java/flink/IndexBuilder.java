@@ -1,6 +1,7 @@
 package flink;
 
 import flink.datatype.*;
+import flink.test.IndexBuilderResult;
 import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.MapPartitionFunction;
@@ -100,13 +101,145 @@ public class IndexBuilder implements Serializable{
         // TODO: Remove here after testing
         globalRTree.print();
         localRTree.print();
-
     }
 
+    /**
+     * This version is added for testing only. It requires sampleData as a parameter to make sure the test will always return same result.
+     * @param data
+     * @param nbDimension
+     * @param nbNodePerEntry
+     * @param sampleRate
+     * @param parallelism
+     * @throws Exception
+     */
+    public IndexBuilderResult buildIndexTestVersion(DataSet<Point> data, DataSet<Point> sampleData, final int nbDimension, final int nbNodePerEntry, double sampleRate, int parallelism) throws Exception {
+        // Step 1: create MBR and STRPartitioner based on sampled data
+        boolean withReplacement = false;
+        STRPartitioner partitioner = createSTRPartitionerTestVersion(data, sampleData, nbDimension, nbNodePerEntry, sampleRate, parallelism);
+
+        // Partition data
+        DataSet<Point> partitionedData = data.partitionCustom(partitioner, new KeySelector<Point, Point>() {
+            @Override
+            public Point getKey(Point point) throws Exception {
+                return point;
+            }
+        });
+
+        // Step 2: build local RTree
+        DataSet<RTree> localRTree = partitionedData.mapPartition(new MapPartitionFunction<Point, RTree>() {
+            @Override
+            public void mapPartition(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
+                List<Point> pointList = new ArrayList<Point>();
+                Iterator<Point> pointIter = iterable.iterator();
+                while (pointIter.hasNext()){
+                    pointList.add(pointIter.next());
+                }
+
+                STRPacking strPacking = new STRPacking(nbNodePerEntry,nbDimension);
+                RTree rtree = strPacking.createRTree(pointList);
+                collector.collect(rtree);
+            }
+        });
+
+        // Step 3: build global RTree
+        DataSet<RTree> globalRTree = localRTree.reduceGroup(new GroupReduceFunction<RTree, RTree>() {
+            @Override
+            public void reduce(Iterable<RTree> iterable, Collector<RTree> collector) throws Exception {
+                Iterator<RTree> rtreeIter = iterable.iterator();
+                int i =0;
+                List<PartitionedMBR> partitionedMBRList = new ArrayList<PartitionedMBR>();
+                while(rtreeIter.hasNext()){
+                    i++;
+                    RTree rtree = rtreeIter.next();
+                    PartitionedMBR point = new PartitionedMBR(rtree.getRootNode().getMbr(), i);
+                    partitionedMBRList.add(point);
+                }
+
+                STRPacking strPacking = new STRPacking(nbNodePerEntry, nbDimension);
+                RTree globalTree = strPacking.createGlobalRTree(partitionedMBRList);
+                collector.collect(globalTree);
+            }
+        });
+
+        IndexBuilderResult result = new IndexBuilderResult(globalRTree.collect().get(0), localRTree, partitioner);
+        return result;
+    }
+
+
+    /**
+     * This method is used for creating STRPartitioner based on sampled data.
+     * @param data
+     * @param nbDimension
+     * @param maxNodePerEntry
+     * @param sampleRate
+     * @param parallelism
+     * @return
+     * @throws Exception
+     */
     public STRPartitioner createSTRPartitioner(DataSet<Point> data, final int nbDimension, final int maxNodePerEntry, double sampleRate, final int parallelism) throws Exception {
         // Sample data
         boolean withReplacement = false;
         DataSet<Point> sampleData = DataSetUtils.sample(data, withReplacement, sampleRate);
+
+        DataSet<RTree> rTrees = sampleData.reduceGroup(new RichGroupReduceFunction<Point, RTree>() {
+            @Override
+            public void reduce(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
+                List<Point> samplePoints = new ArrayList<Point>();
+                Iterator<Point> iter = iterable.iterator();
+                while (iter.hasNext()) {
+                    samplePoints.add(iter.next());
+                }
+
+                System.out.println("Sample size: " + samplePoints.size() );
+
+                // calculate number nodes per entry
+                int maxNumberMBR = parallelism;
+                double nbNodePerEntry = Math.ceil(samplePoints.size() / maxNumberMBR);
+                if(nbNodePerEntry == 0 ){
+                    nbNodePerEntry = 1;
+                }
+
+                // Sort and pack points to create MBRs
+                List<SliceIndex> sliceIndexList = sortPoints(samplePoints, 0, samplePoints.size(), nbNodePerEntry, 0, nbDimension, nbDimension);
+                List<MBR> mbrBounds = new ArrayList<MBR>();
+                for(int i = 0; i < sliceIndexList.size(); i++){
+                    SliceIndex slice = sliceIndexList.get(i);
+                    List<Point> subList = samplePoints.subList(slice.getStartIndex(), slice.getEndIndex());
+                    List<MBR> mbrs = calculateMBR(subList, nbDimension, nbNodePerEntry);
+                    mbrBounds.addAll(mbrs);
+                }
+
+                // From MBR, create partition points (MBR, partition). The idea is to distribute each MBR to each partition
+                List<PartitionedMBR> partitionedMBRs = new ArrayList<PartitionedMBR>(mbrBounds.size());
+                for(int i =0; i<mbrBounds.size(); i++){
+                    // TODO: i% MBR to make sure, partitionnumber is not out of index bound
+                    PartitionedMBR mbr = new PartitionedMBR(mbrBounds.get(i), i % maxNumberMBR);
+                    partitionedMBRs.add(mbr);
+                }
+                RTree rTree = createGlobalRTree(partitionedMBRs, nbDimension, maxNodePerEntry);
+                collector.collect(rTree);
+            }
+        });
+
+        return new STRPartitioner(rTrees.collect().get(0));
+    }
+
+
+    /**
+     * This version is added for testing only. It requires sampleData as a parameter to make sure the test will always return same result.
+     * @param data
+     * @param sampleData
+     * @param nbDimension
+     * @param maxNodePerEntry
+     * @param sampleRate
+     * @param parallelism
+     * @return
+     * @throws Exception
+     */
+    public STRPartitioner createSTRPartitionerTestVersion(DataSet<Point> data, DataSet<Point> sampleData, final int nbDimension, final int maxNodePerEntry, double sampleRate, final int parallelism) throws Exception {
+        // Sample data
+//        boolean withReplacement = false;
+//        DataSet<Point> sampleData = DataSetUtils.sample(data, withReplacement, sampleRate);
 
         DataSet<RTree> rTrees = sampleData.reduceGroup(new RichGroupReduceFunction<Point, RTree>() {
             @Override
