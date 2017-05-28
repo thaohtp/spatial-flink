@@ -21,28 +21,13 @@ public class STRPartitioner implements Partitioner<Point> {
 
     @Override
     public int partition(Point point, int i) {
-        // TODO: should we insert point and how to update it
         List<RTreeNode> rTreeNodes = this.rTree.search(point);
         // If we could not find MBR which contains the Point, then get all leaf nodes and calculate the distance
         if(rTreeNodes == null || rTreeNodes.isEmpty()){
             System.out.println("Not matched");
             rTreeNodes = this.rTree.getLeafNodes();
         }
-//        for(int k =0; k<rTreeNodes.size(); k++){
-//            MBRLeafNode MBRLeafNode = (MBRLeafNode) rTreeNodes.get(k);
-//            List<PartitionedMBR> partitions = MBRLeafNode.getPartitionedMBRList();
-//            for(int j = 0; j<partitions.size(); j++){
-//                PartitionedMBR mbr = partitions.get(j);
-//                if(mbr.getMbr().contains(point)){
-//                    System.out.println("MBR: " + mbr.getMbr());
-//                    // TODO: be careful with this i
-//                    System.out.println("Partition number: " + mbr.getPartitionNumber());
-//                    return mbr.getPartitionNumber() % i;
-//                }
-//            }
-//        }
 
-//        rTreeNodes = this.rTree.getLeafNodes();
         PartitionedMBR chosenPPoint = null;
         double minDistance = Double.MAX_VALUE;
         for(int k =0; k<rTreeNodes.size(); k++){
@@ -58,8 +43,7 @@ public class STRPartitioner implements Partitioner<Point> {
             }
         }
 
-        // update MBR of Partition Point
-        chosenPPoint.getMbr().addPoint(point);
+        System.out.println("Partition: " + chosenPPoint.getPartitionNumber());
         return chosenPPoint.getPartitionNumber();
     }
 

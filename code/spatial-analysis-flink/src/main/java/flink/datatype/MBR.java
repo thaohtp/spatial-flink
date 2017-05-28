@@ -14,6 +14,7 @@ public class MBR implements Serializable{
     private Point minPoint;
     private boolean isInitialized = true;
     private int nbDimension;
+    private long size;
 
     public MBR(int nbDimension){
         this.nbDimension = nbDimension;
@@ -27,19 +28,21 @@ public class MBR implements Serializable{
         this.minPoint = new Point(minList);
     }
 
-    public MBR(Point point1, Point point2){
-        this.nbDimension = point1.getNbDimension();
-        List<Float> maxList = new ArrayList<Float>(nbDimension);
-        List<Float> minList = new ArrayList<Float>(nbDimension);
-        for(int i =0; i<nbDimension; i++){
-            maxList.add(i, Float.MAX_VALUE);
-            minList.add(i, Float.MIN_VALUE);
-        }
-        this.maxPoint = new Point(maxList);
-        this.minPoint = new Point(minList);
-
-        this.addPoint(point1);
-        this.addPoint(point2);
+    public MBR(Point minPoint, Point maxPoint){
+//        this.nbDimension = maxPoint.getNbDimension();
+//        List<Float> maxList = new ArrayList<Float>(nbDimension);
+//        List<Float> minList = new ArrayList<Float>(nbDimension);
+//        for(int i =0; i<nbDimension; i++){
+//            maxList.add(i, Float.MAX_VALUE);
+//            minList.add(i, Float.MIN_VALUE);
+//        }
+        this.nbDimension = maxPoint.getNbDimension();
+        this.maxPoint = maxPoint;
+        this.minPoint = minPoint;
+        this.isInitialized = false;
+//
+//        this.addPoint(point1);
+//        this.addPoint(point2);
 
     }
 
@@ -62,6 +65,7 @@ public class MBR implements Serializable{
     // add methods to update point whenever adding a new point
 
     public void addPoint(Point point){
+        // TODO: inefficient check here
         if(this.isInitialized){
             for(int i =0; i<nbDimension; i++){
                 this.maxPoint.setDimension(point.getDimension(i), i);
@@ -85,11 +89,18 @@ public class MBR implements Serializable{
         }
     }
 
+    public void addPoints(List<Point> points){
+        for (Point point: points) {
+            this.addPoint(point);
+        }
+    }
+
     // TODO: how can we compare efficiently here
     public void addMBR(MBR mbr){
-        if(this.contains(mbr)){
-            return;
-        }
+        // TODO: check contains here again
+//        if(this.contains(mbr)){
+//            return;
+//        }
 
         this.addPoint(mbr.getMaxPoint());
         this.addPoint(mbr.getMinPoint());
@@ -144,5 +155,28 @@ public class MBR implements Serializable{
             distance = distance + Math.pow(distanceL1, 2);
         }
         return Math.sqrt(distance);
+    }
+
+    public boolean isInitialized() {
+        return isInitialized;
+    }
+    public void setInitialized(boolean initialized) {
+        isInitialized = initialized;
+    }
+
+    public int getNbDimension() {
+        return nbDimension;
+    }
+
+    public void setNbDimension(int nbDimension) {
+        this.nbDimension = nbDimension;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
     }
 }

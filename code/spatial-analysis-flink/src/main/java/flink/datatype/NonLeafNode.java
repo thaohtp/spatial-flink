@@ -10,25 +10,26 @@ import java.util.List;
 public class NonLeafNode extends RTreeNode implements Serializable{
 
     private List<RTreeNode> childNodes;
-
     public NonLeafNode(){
-
     }
 
     public NonLeafNode(int nbDimension){
         super(nbDimension, false);
         this.childNodes = new ArrayList<RTreeNode>();
+        this.size = 0;
     }
 
     //For leaf node, what should be the pointer
     public NonLeafNode(int nbDimension, MBR mbr, List<RTreeNode> childNodes){
         super(nbDimension, mbr,false);
         this.childNodes = childNodes;
+        this.size = childNodes.size();
     }
 
     public void addChildNode(RTreeNode childNode){
         this.childNodes.add(childNode);
         this.mbr.addMBR(childNode.getMbr());
+        this.size += childNode.getSize();
     }
 
     @Override
@@ -50,4 +51,13 @@ public class NonLeafNode extends RTreeNode implements Serializable{
         str.append(" > \n");
         return str.toString();
     }
+
+    public long getSize() {
+        return size;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
+    }
+
 }

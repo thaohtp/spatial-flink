@@ -23,6 +23,13 @@ public class Point implements Key<Point>{
         this.values = values;
     }
 
+    public Point(float[] values){
+        this.values = new ArrayList<Float>(values.length);
+        for(int i =0; i<values.length; i++){
+            this.values.add(values[i]);
+        }
+    }
+
     public Point add(Point point) {
         for(int i =0; i< this.values.size(); i++){
             float currentVal = this.values.get(i);

@@ -11,20 +11,24 @@ public class RTreeNode implements Serializable {
     protected boolean isLeaf = false;
     protected int nbDimension;
 
-    public RTreeNode(){
+    protected long size;
 
+    public RTreeNode(){
+        this.size = 0;
     }
 
     public RTreeNode(int nbDimension, boolean isLeaf){
         this.nbDimension = nbDimension;
         this.isLeaf = isLeaf;
         this.mbr = new MBR(nbDimension);
+        this.size = 0;
     }
 
     public RTreeNode(int nbDimension, MBR mbr, boolean isLeaf){
         this.nbDimension = nbDimension;
         this.mbr = mbr;
         this.isLeaf = isLeaf;
+        this.size = 0;
     }
 
     public MBR getMbr() {
@@ -107,6 +111,26 @@ public class RTreeNode implements Serializable {
 
     public List<RTreeNode> getChildNodes(){
       return null;
+    }
+
+    public int getNbDimension() {
+        return nbDimension;
+    }
+
+    public void setNbDimension(int nbDimension) {
+        this.nbDimension = nbDimension;
+    }
+
+    /**
+     * Get number of points
+     * @return
+     */
+    public long getSize() {
+        return size;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
     }
 
 }

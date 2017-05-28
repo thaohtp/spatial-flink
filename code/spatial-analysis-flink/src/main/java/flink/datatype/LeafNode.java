@@ -14,22 +14,26 @@ public abstract class LeafNode<T> extends RTreeNode implements Serializable{
     public LeafNode(int nbDimension){
         super(nbDimension, true);
         this.entries = new ArrayList<T>();
+        this.size = 0;
     }
 
     public LeafNode(int nbDimension, MBR mbr, List<T> entries){
         super(nbDimension, true);
         this.entries = entries;
+        this.size = entries.size();
     }
 
     public void addPoint(T entry){
         if(entry instanceof Point){
             Point point = (Point) entry;
             this.mbr.addPoint(point);
+            this.size++;
         }
         else{
             if(entry instanceof PartitionedMBR){
                 PartitionedMBR mbr = (PartitionedMBR) entry;
                 this.mbr.addMBR(mbr.getMbr());
+                this.size += mbr.getSize();
             }
         }
         this.entries.add(entry);
@@ -51,4 +55,5 @@ public abstract class LeafNode<T> extends RTreeNode implements Serializable{
     public void setEntries(List<T> entries) {
         this.entries = entries;
     }
+
 }

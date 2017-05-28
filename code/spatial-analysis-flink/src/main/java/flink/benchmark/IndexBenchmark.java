@@ -2,14 +2,15 @@ package flink.benchmark;
 
 import flink.IndexBuilder;
 import flink.datatype.Point;
+import flink.test.IndexBuilderResult;
 import flink.util.Utils;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.api.java.utils.DataSetUtils;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.fs.FileSystem;
-import org.apache.flink.hadoop.shaded.org.apache.commons.httpclient.util.DateUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 
@@ -18,6 +19,8 @@ import java.util.Date;
  */
 public class IndexBenchmark {
     public static void main(String[] args) throws Exception {
+        Logger LOG = LoggerFactory.getLogger(IndexBenchmark.class);
+
         // Benchmark indexing time
         final ParameterTool params = ParameterTool.fromArgs(args);
         String input = params.get("input");
@@ -25,6 +28,8 @@ public class IndexBenchmark {
         Integer maxNodePerEntry = params.getInt("nodeperentry", 3);
         final Integer nbDimension = params.getInt("nbdimension", 2);
         String output = params.get("output");
+        String localRTreeOutput = params.get("output") + "/localtree";
+        String globalRTreeOutput = params.get("output") + "/globaltree";
 
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         // make params available on web interface
@@ -50,11 +55,17 @@ public class IndexBenchmark {
         System.out.println("Start time: " + startTime + " - " + new Date());
 
         IndexBuilder indexBuilder = new IndexBuilder();
-        indexBuilder.buildIndex(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
+//        IndexBuilderResult result = indexBuilder.buildIndexTestVersion(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
 
         Long endTime = System.currentTimeMillis();
         System.out.println("End time: " + endTime + " - " + new Date());
         System.out.println("Total time: " +(endTime - startTime));
 
+        // Size of each rtree partition
+
+        // benchmark index storage over head
+
+
+        // benchmark balancing
     }
 }

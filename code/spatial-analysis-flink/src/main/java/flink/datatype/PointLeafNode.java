@@ -28,4 +28,5 @@ public class PointLeafNode extends LeafNode<Point>{
 
         return true;
     }
+
 }
