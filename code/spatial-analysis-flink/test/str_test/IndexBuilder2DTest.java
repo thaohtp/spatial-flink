@@ -60,9 +60,12 @@ public class IndexBuilder2DTest {
         DataSet<Point> samplePointDS = env.fromCollection(samplePoints);
 
         IndexBuilderResult result = indexBuilder.buildIndexTestVersion(pointDS, pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
+//        indexBuilder.buildIndex(pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
 
-        System.out.println("Result: \n" + result.getGlobalRTree().toString());
+        System.out.println("Global tree: " + result.getGlobalRTree().toString());
+        System.out.println("Local tree: ");
         result.getLocalRTree().print();
+        System.out.println(result.getLocalRTree().count());
     }
 
     @Test
