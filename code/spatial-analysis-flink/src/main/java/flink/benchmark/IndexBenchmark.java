@@ -1,17 +1,21 @@
 package flink.benchmark;
 
 import flink.IndexBuilder;
+import flink.RTree;
 import flink.datatype.Point;
 import flink.test.IndexBuilderResult;
 import flink.util.Utils;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.io.FileOutputFormat;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.io.TextOutputFormat;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.core.fs.FileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Date;
 
 /**
@@ -24,12 +28,13 @@ public class IndexBenchmark {
         // Benchmark indexing time
         final ParameterTool params = ParameterTool.fromArgs(args);
         String input = params.get("input");
-        Double sampleRate = params.getDouble("samplerate", 0.1);
-        Integer maxNodePerEntry = params.getInt("nodeperentry", 3);
+        final Double sampleRate = params.getDouble("samplerate", 0.1);
+        final Integer maxNodePerEntry = params.getInt("nodeperentry", 3);
         final Integer nbDimension = params.getInt("nbdimension", 2);
         String output = params.get("output");
         String localRTreeOutput = params.get("output") + "/localtree";
         String globalRTreeOutput = params.get("output") + "/globaltree";
+        String dataOutput = params.get("output") + "/data";
 
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         // make params available on web interface
@@ -40,7 +45,6 @@ public class IndexBenchmark {
                     @Override
                     public Point map(String s) throws Exception {
                         String[] parts = s.split(",");
-                        System.out.println(s);
                         if(nbDimension == 3){
                             return Utils.create3DPoint(Float.parseFloat(parts[0]), Float.parseFloat(parts[1]), Float.parseFloat(parts[2]));
                         }
@@ -49,23 +53,46 @@ public class IndexBenchmark {
                         }
                     }
                 });
-        data.writeAsText(output, FileSystem.WriteMode.OVERWRITE);
 
         Long startTime = System.currentTimeMillis();
-        System.out.println("Start time: " + startTime + " - " + new Date());
-
         IndexBuilder indexBuilder = new IndexBuilder();
-//        IndexBuilderResult result = indexBuilder.buildIndexTestVersion(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
-
+//        DataSet<Point> partitionedData = indexBuilder.buildIndex(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
+        IndexBuilderResult result = indexBuilder.buildIndex(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
         Long endTime = System.currentTimeMillis();
-        System.out.println("End time: " + endTime + " - " + new Date());
-        System.out.println("Total time: " +(endTime - startTime));
 
-        // Size of each rtree partition
+
+        // local rtree size
+        final DataSet<RTree> localTrees = result.getLocalRTree();
+        RTree globalTree = result.getGlobalRTree();
+        DataSet<Point> partitionedData = result.getData();
+
+        partitionedData.writeAsFormattedText(dataOutput, FileSystem.WriteMode.OVERWRITE, new TextOutputFormat.TextFormatter<Point>() {
+            @Override
+            public String format(Point point) {
+                return point.toString();
+            }
+        });
+
+        System.out.println("\n---------------- Statistics -------------");
+        System.out.println("Start building index: " + startTime + " - " + new Date());
+        System.out.println("End building index: " + endTime + " - " + new Date());
+        System.out.println("Total time of building index: " +(endTime - startTime) + " ms");
+        System.out.println("---------------- End statistics -------------");
+
+        System.out.println("\n---------------- Local trees -------------");
+        localTrees.map(new MapFunction<RTree, String>() {
+            @Override
+            public String map(RTree rTree) throws Exception {
+                return "Local tree: ," + rTree.getRootNode().getSize() + "," + rTree.getRootNode().getMbr();
+            }
+        }).print();
+        System.out.println("---------------- End local trees ---------");
+
+        System.out.println("\n---------------- Global tree -------------");
+        System.out.println(globalTree.getRootNode().getSize() + "," + globalTree.getRootNode().getMbr());
+        System.out.println(globalTree.toString());
+        System.out.println("---------------- End global tree ---------");
 
         // benchmark index storage over head
-
-
-        // benchmark balancing
     }
 }

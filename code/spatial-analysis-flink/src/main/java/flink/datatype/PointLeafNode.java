@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Created by JML on 3/31/17.
  */
-public class PointLeafNode extends LeafNode<Point>{
+public class PointLeafNode extends LeafNode<Point> implements Serializable{
 
     public PointLeafNode(int nbDimension){
         super(nbDimension);

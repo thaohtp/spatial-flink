@@ -3,12 +3,10 @@ package flink;
 import flink.datatype.*;
 import flink.test.IndexBuilderResult;
 import flink.util.PointComparator;
-import org.apache.commons.lang.SerializationUtils;
 import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.api.java.operators.PartitionOperator;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.DataSetUtils;
 import org.apache.flink.util.Collector;
@@ -40,13 +38,10 @@ public class IndexBuilder implements Serializable {
                 });
 
         IndexBuilder builder = new IndexBuilder();
-        DataSet<Point> partitionedData = builder.buildIndex(data, 2, 3, 0.5, 4);
-        PartitionOperator partitionOperator = (PartitionOperator) partitionedData;
-        STRPartitioner partitioner = (STRPartitioner) partitionOperator.getCustomPartitioner();
-
+        IndexBuilderResult result = builder.buildIndex(data, 2, 3, 0.5, 4);
 
         System.out.println("After partitioning partitioner ");
-        List<RTreeNode> leafNodes = partitioner.getrTree().getLeafNodes();
+        List<RTreeNode> leafNodes = result.getPartitioner().getrTree().getLeafNodes();
         for (RTreeNode node : leafNodes) {
             MBRLeafNode leaf = (MBRLeafNode) node;
             List<PartitionedMBR> entries = leaf.getEntries();
@@ -56,7 +51,7 @@ public class IndexBuilder implements Serializable {
         }
 
         System.out.println("RTree in partitioner: ");
-        System.out.println(partitioner.getrTree());
+        System.out.println(result.getPartitioner().getrTree());
 
     }
 
@@ -65,11 +60,10 @@ public class IndexBuilder implements Serializable {
     // Step 2: Get all partitioned data and build local index by map partition
     // Step 3: Build up global tree index
 
-    public DataSet<Point> buildIndex(DataSet<Point> data, final int nbDimension, final int nbNodePerEntry, double sampleRate, int parallelism) throws Exception {
+    public IndexBuilderResult buildIndex(DataSet<Point> data, final int nbDimension, final int nbNodePerEntry, final double sampleRate, int parallelism) throws Exception {
         // Step 1: create MBR and STRPartitioner based on sampled data
         boolean withReplacement = false;
         STRPartitioner partitioner = createSTRPartitioner(data, nbDimension, nbNodePerEntry, sampleRate, parallelism);
-
         // Partition data
         DataSet<Point> partitionedData = data.partitionCustom(partitioner, new KeySelector<Point, Point>() {
             @Override
@@ -115,106 +109,7 @@ public class IndexBuilder implements Serializable {
             }
         });
 
-        // TODO: Remove here after testing
-        globalRTree.print();
-        localRTree.print();
-        return partitionedData;
-    }
-
-    /**
-     * This version is added for testing only. It requires sampleData as a parameter to make sure the test will always return same result.
-     *
-     * @param data
-     * @param nbDimension
-     * @param nbNodePerEntry
-     * @param sampleRate
-     * @param parallelism
-     * @throws Exception
-     */
-    public IndexBuilderResult buildIndexTestVersion(DataSet<Point> data, DataSet<Point> sampleData, final int nbDimension, final int nbNodePerEntry, double sampleRate, int parallelism) throws Exception {
-        // Step 1: create MBR and STRPartitioner based on sampled data
-        boolean withReplacement = false;
-        STRPartitioner partitioner = createSTRPartitioner(data, nbDimension, nbNodePerEntry, sampleRate, parallelism);
-
-        System.out.println("Before partitioning");
-        List<RTreeNode> leafNodes = partitioner.getrTree().getLeafNodes();
-        for (RTreeNode node : leafNodes) {
-            MBRLeafNode leaf = (MBRLeafNode) node;
-            List<PartitionedMBR> entries = leaf.getEntries();
-            for (PartitionedMBR mbr : entries) {
-                System.out.println(mbr.getMbr().toString());
-            }
-        }
-
-        // Partition data
-        DataSet<Point> partitionedData = data.partitionCustom(partitioner, new KeySelector<Point, Point>() {
-            @Override
-            public Point getKey(Point point) throws Exception {
-                return point;
-            }
-        });
-
-        // Step 2: build local RTree
-        DataSet<RTree> localRTree = partitionedData.mapPartition(new MapPartitionFunction<Point, RTree>() {
-            @Override
-            public void mapPartition(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
-                List<Point> points = new ArrayList<Point>();
-                Iterator<Point> pointIter = iterable.iterator();
-                while (pointIter.hasNext()) {
-                    points.add(pointIter.next());
-                }
-
-                STRPacking strPacking = new STRPacking(nbNodePerEntry, nbDimension);
-                RTree rTree = strPacking.createRTree(points);
-//                RTree rTree = createLocalRTree(points, nbDimension, nbNodePerEntry);
-                collector.collect(rTree);
-            }
-        });
-
-        // Step 3: build global RTree
-        DataSet<RTree> globalRTree = localRTree.reduceGroup(new GroupReduceFunction<RTree, RTree>() {
-            @Override
-            public void reduce(Iterable<RTree> iterable, Collector<RTree> collector) throws Exception {
-                Iterator<RTree> rtreeIter = iterable.iterator();
-                int i = 0;
-                List<PartitionedMBR> partitionedMBRList = new ArrayList<PartitionedMBR>();
-                while (rtreeIter.hasNext()) {
-                    i++;
-                    RTree rtree = rtreeIter.next();
-                    PartitionedMBR point = new PartitionedMBR(rtree.getRootNode().getMbr(), i);
-                    partitionedMBRList.add(point);
-                }
-
-//                STRPacking strPacking = new STRPacking(nbNodePerEntry, nbDimension);
-//                RTree globalTree = strPacking.createGlobalRTree(partitionedMBRList);
-                RTree globalTree = createGlobalRTree(partitionedMBRList, nbDimension, nbNodePerEntry);
-                collector.collect(globalTree);
-            }
-        });
-
-        DataSet<RTree> localRTree2 = partitionedData.mapPartition(new MapPartitionFunction<Point, RTree>() {
-            @Override
-            public void mapPartition(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
-                List<Point> points = new ArrayList<Point>();
-                Iterator<Point> pointIter = iterable.iterator();
-                while (pointIter.hasNext()) {
-                    points.add(pointIter.next());
-                }
-
-                if(!points.isEmpty()){
-                    RTree rTree = createLocalRTree(points, nbDimension, nbNodePerEntry);
-                    collector.collect(rTree);
-                }
-
-            }
-        });
-
-        globalRTree.print();
-        localRTree.print();
-        localRTree2.print();
-
-
-        IndexBuilderResult result = new IndexBuilderResult(globalRTree.collect().get(0), localRTree, partitioner);
+        IndexBuilderResult result = new IndexBuilderResult(partitionedData, globalRTree.collect().get(0), localRTree, partitioner);
         return result;
     }
 
@@ -238,7 +133,11 @@ public class IndexBuilder implements Serializable {
                     @Override
                     public Tuple2<MBR, Integer> map(Point point) throws Exception {
                         MBR mbr = new MBR(nbDimension);
-                        Point clonePoint = (Point) SerializationUtils.clone(point);
+                        float[] cloneVals = new float[point.getNbDimension()];
+                        for(int i = 0; i < cloneVals.length; i++){
+                            cloneVals[i] = point.getDimension(i);
+                        }
+                        Point clonePoint = new Point(cloneVals);
                         mbr.setMaxPoint(point);
                         mbr.setMinPoint(clonePoint);
                         mbr.setInitialized(false);
@@ -431,8 +330,8 @@ public class IndexBuilder implements Serializable {
     public List<PointLeafNode> packPointLeafNodes(List<Point> data, int[] totalLeaf, int nbDimension, final int currentDimension) {
         // sort data first
         Collections.sort(data, new PointComparator(currentDimension));
-        int curTotalLeaf = totalLeaf[currentDimension];
-        int maxPointPerEntry = (int) Math.ceil(data.size() * 1.0 / curTotalLeaf);
+        int maxPointPerEntry = (int) Math.ceil(data.size() * 1.0 / totalLeaf[currentDimension]);
+        int curTotalLeaf = (int) Math.ceil(data.size() * 1.0 / maxPointPerEntry);
 
         List<PointLeafNode> result = new ArrayList<PointLeafNode>();
         if (currentDimension == nbDimension -1) {
@@ -481,8 +380,8 @@ public class IndexBuilder implements Serializable {
             }
         });
 
-        int currentNbMBR = nbMBRs[currentDimension];
-        int nbPointPerMBR = (int) Math.ceil(data.size() * 1.0 / currentNbMBR);
+        int nbPointPerMBR = (int) Math.ceil(data.size() * 1.0 / nbMBRs[currentDimension]);
+        int currentNbMBR = (int) Math.ceil(data.size()*1.0 / nbPointPerMBR);
 
         List<RTreeNode> result = new ArrayList<RTreeNode>();
         if (currentDimension == nbDimension -1) {
@@ -524,88 +423,6 @@ public class IndexBuilder implements Serializable {
             }
         }
         return result;
-    }
-
-    /**
-     * This version is added for testing only. It requires sampleData as a parameter to make sure the test will always return same result.
-     *
-     * @param data
-     * @param sampleData
-     * @param nbDimension
-     * @param maxNodePerEntry
-     * @param sampleRate
-     * @param parallelism
-     * @return
-     * @throws Exception
-     */
-    public STRPartitioner createSTRPartitionerTestVersion(DataSet<Point> data, DataSet<Point> sampleData, final int nbDimension, final int maxNodePerEntry, double sampleRate, final int parallelism) throws Exception {
-        // create boundary for whole dataset
-        // Tuple2<MBR, number of data points>
-        DataSet<Tuple2<MBR, Integer>> globalBoundDS = data
-                .map(new MapFunction<Point, Tuple2<MBR, Integer>>() {
-                    @Override
-                    public Tuple2<MBR, Integer> map(Point point) throws Exception {
-                        MBR mbr = new MBR(nbDimension);
-                        Point clonePoint = (Point) SerializationUtils.clone(point);
-                        mbr.setMaxPoint(point);
-                        mbr.setMinPoint(clonePoint);
-                        mbr.setInitialized(false);
-                        return new Tuple2<MBR, Integer>(mbr, 0);
-                    }
-                })
-                .reduce(new ReduceFunction<Tuple2<MBR, Integer>>() {
-                    @Override
-                    public Tuple2<MBR, Integer> reduce(Tuple2<MBR, Integer> mbrIntegerTuple2, Tuple2<MBR, Integer> t1) throws Exception {
-                        mbrIntegerTuple2.f0.addPoint(t1.f0.getMinPoint());
-                        mbrIntegerTuple2.f1++;
-                        return mbrIntegerTuple2;
-                    }
-                });
-
-        final Tuple2<MBR, Integer> globalBound = globalBoundDS.collect().get(0);
-
-        // calculate number of MBRs on each dimension
-        // the idea is the total number of mbr over all dimensions will be equal to parallelism
-        // remaining = P in the algorithm
-        double remaining = parallelism;
-        final int[] nbMBRs = new int[nbDimension];
-        for (int i = 0; i < nbDimension; i++) {
-            // nbMBR = S in each dimension
-            nbMBRs[i] = (int) Math.ceil(Math.pow(remaining, 1.0 / (nbDimension - i)));
-            remaining = remaining * 1.0 / nbMBRs[i];
-        }
-
-        // Sample data
-        boolean withReplacement = false;
-
-        DataSet<RTree> rTrees = sampleData.reduceGroup(new RichGroupReduceFunction<Point, RTree>() {
-            @Override
-            public void reduce(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
-                List<Point> samplePoints = new ArrayList<Point>();
-                Iterator<Point> iter = iterable.iterator();
-                while (iter.hasNext()) {
-                    samplePoints.add(iter.next());
-                }
-
-                // calculate number nodes per entry
-                float[] lowerBounds = new float[nbDimension];
-                float[] upperBounds = new float[nbDimension];
-                List<MBR> mbrBounds = packPointsIntoMBR(samplePoints, nbMBRs, lowerBounds, upperBounds, nbDimension, 0, globalBound.f0);
-
-                // From MBR, create partition points (MBR, partition). The idea is to distribute each MBR to each partition
-                List<PartitionedMBR> partitionedMBRs = new ArrayList<PartitionedMBR>(mbrBounds.size());
-                for (int i = 0; i < mbrBounds.size(); i++) {
-                    // TODO: i% MBR to make sure, partitionnumber is not out of index bound
-                    PartitionedMBR mbr = new PartitionedMBR(mbrBounds.get(i), i % parallelism);
-                    mbr.setSize(mbrBounds.get(i).getSize());
-                    partitionedMBRs.add(mbr);
-                }
-                RTree rTree = createGlobalRTree(partitionedMBRs, nbDimension, maxNodePerEntry);
-                collector.collect(rTree);
-            }
-        });
-
-        return new STRPartitioner(rTrees.collect().get(0));
     }
 
     /**
@@ -670,5 +487,170 @@ public class IndexBuilder implements Serializable {
         return quantity;
     }
 
+    /**
+     * This version is added for testing only. It requires sampleData as a parameter to make sure the test will always return same result.
+     *
+     * @param data
+     * @param nbDimension
+     * @param nbNodePerEntry
+     * @param sampleRate
+     * @param parallelism
+     * @throws Exception
+     */
+    public IndexBuilderResult buildIndexTestVersion(DataSet<Point> data, DataSet<Point> sampleData, final int nbDimension, final int nbNodePerEntry, double sampleRate, int parallelism) throws Exception {
+        // Step 1: create MBR and STRPartitioner based on sampled data
+        boolean withReplacement = false;
+        STRPartitioner partitioner = createSTRPartitioner(data, nbDimension, nbNodePerEntry, sampleRate, parallelism);
+
+        System.out.println("Before partitioning");
+        List<RTreeNode> leafNodes = partitioner.getrTree().getLeafNodes();
+        for (RTreeNode node : leafNodes) {
+            MBRLeafNode leaf = (MBRLeafNode) node;
+            List<PartitionedMBR> entries = leaf.getEntries();
+            for (PartitionedMBR mbr : entries) {
+                System.out.println(mbr.getMbr().toString());
+            }
+        }
+
+        // Partition data
+        DataSet<Point> partitionedData = data.partitionCustom(partitioner, new KeySelector<Point, Point>() {
+            @Override
+            public Point getKey(Point point) throws Exception {
+                return point;
+            }
+        });
+
+        // Step 2: build local RTree
+        DataSet<RTree> localRTree = partitionedData.mapPartition(new MapPartitionFunction<Point, RTree>() {
+            @Override
+            public void mapPartition(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
+                List<Point> points = new ArrayList<Point>();
+                Iterator<Point> pointIter = iterable.iterator();
+                while (pointIter.hasNext()) {
+                    points.add(pointIter.next());
+                }
+
+                if(!points.isEmpty()){
+                    RTree rTree = createLocalRTree(points, nbDimension, nbNodePerEntry);
+                    collector.collect(rTree);
+                }
+            }
+        });
+
+        // Step 3: build global RTree
+        DataSet<RTree> globalRTree = localRTree.reduceGroup(new GroupReduceFunction<RTree, RTree>() {
+            @Override
+            public void reduce(Iterable<RTree> iterable, Collector<RTree> collector) throws Exception {
+                Iterator<RTree> rtreeIter = iterable.iterator();
+                int i = 0;
+                List<PartitionedMBR> partitionedMBRList = new ArrayList<PartitionedMBR>();
+                while (rtreeIter.hasNext()) {
+                    i++;
+                    RTree rtree = rtreeIter.next();
+                    PartitionedMBR point = new PartitionedMBR(rtree.getRootNode().getMbr(), i);
+                    partitionedMBRList.add(point);
+                }
+
+                RTree globalTree = createGlobalRTree(partitionedMBRList, nbDimension, nbNodePerEntry);
+                collector.collect(globalTree);
+            }
+        });
+
+//        DataSet<RTree> globalRTree = localRTree.reduceGroup(new GlobalTreeGroupReducedFunc(nbDimension, nbNodePerEntry));
+
+
+        globalRTree.print();
+        localRTree.print();
+
+        IndexBuilderResult result = new IndexBuilderResult(partitionedData, globalRTree.collect().get(0), localRTree, partitioner);
+        return result;
+    }
+
+
+    /**
+     * This version is added for testing only. It requires sampleData as a parameter to make sure the test will always return same result.
+     *
+     * @param data
+     * @param sampleData
+     * @param nbDimension
+     * @param maxNodePerEntry
+     * @param sampleRate
+     * @param parallelism
+     * @return
+     * @throws Exception
+     */
+    public STRPartitioner createSTRPartitionerTestVersion(DataSet<Point> data, DataSet<Point> sampleData, final int nbDimension, final int maxNodePerEntry, double sampleRate, final int parallelism) throws Exception {
+        // create boundary for whole dataset
+        // Tuple2<MBR, number of data points>
+        DataSet<Tuple2<MBR, Integer>> globalBoundDS = data
+                .map(new MapFunction<Point, Tuple2<MBR, Integer>>() {
+                    @Override
+                    public Tuple2<MBR, Integer> map(Point point) throws Exception {
+                        MBR mbr = new MBR(nbDimension);
+                        float[] cloneVals = new float[point.getNbDimension()];
+                        for(int i = 0; i < cloneVals.length; i++){
+                            cloneVals[i] = point.getDimension(i);
+                        }
+                        Point clonePoint = new Point(cloneVals);
+                        mbr.setMaxPoint(point);
+                        mbr.setMinPoint(clonePoint);
+                        mbr.setInitialized(false);
+                        return new Tuple2<MBR, Integer>(mbr, 0);
+                    }
+                })
+                .reduce(new ReduceFunction<Tuple2<MBR, Integer>>() {
+                    @Override
+                    public Tuple2<MBR, Integer> reduce(Tuple2<MBR, Integer> mbrIntegerTuple2, Tuple2<MBR, Integer> t1) throws Exception {
+                        mbrIntegerTuple2.f0.addPoint(t1.f0.getMinPoint());
+                        mbrIntegerTuple2.f1++;
+                        return mbrIntegerTuple2;
+                    }
+                });
+
+        final Tuple2<MBR, Integer> globalBound = globalBoundDS.collect().get(0);
+
+        // calculate number of MBRs on each dimension
+        // the idea is the total number of mbr over all dimensions will be equal to parallelism
+        // remaining = P in the algorithm
+        double remaining = parallelism;
+        final int[] nbMBRs = new int[nbDimension];
+        for (int i = 0; i < nbDimension; i++) {
+            // nbMBR = S in each dimension
+            nbMBRs[i] = (int) Math.ceil(Math.pow(remaining, 1.0 / (nbDimension - i)));
+            remaining = remaining * 1.0 / nbMBRs[i];
+        }
+
+        // Sample data
+        boolean withReplacement = false;
+
+        DataSet<RTree> rTrees = sampleData.reduceGroup(new RichGroupReduceFunction<Point, RTree>() {
+            @Override
+            public void reduce(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
+                List<Point> samplePoints = new ArrayList<Point>();
+                Iterator<Point> iter = iterable.iterator();
+                while (iter.hasNext()) {
+                    samplePoints.add(iter.next());
+                }
+
+                // calculate number nodes per entry
+                float[] lowerBounds = new float[nbDimension];
+                float[] upperBounds = new float[nbDimension];
+                List<MBR> mbrBounds = packPointsIntoMBR(samplePoints, nbMBRs, lowerBounds, upperBounds, nbDimension, 0, globalBound.f0);
+
+                // From MBR, create partition points (MBR, partition). The idea is to distribute each MBR to each partition
+                List<PartitionedMBR> partitionedMBRs = new ArrayList<PartitionedMBR>(mbrBounds.size());
+                for (int i = 0; i < mbrBounds.size(); i++) {
+                    // TODO: i% MBR to make sure, partitionnumber is not out of index bound
+                    PartitionedMBR mbr = new PartitionedMBR(mbrBounds.get(i), i % parallelism);
+                    mbr.setSize(mbrBounds.get(i).getSize());
+                    partitionedMBRs.add(mbr);
+                }
+                RTree rTree = createGlobalRTree(partitionedMBRs, nbDimension, maxNodePerEntry);
+                collector.collect(rTree);
+            }
+        });
+
+        return new STRPartitioner(rTrees.collect().get(0));
+    }
 
 }

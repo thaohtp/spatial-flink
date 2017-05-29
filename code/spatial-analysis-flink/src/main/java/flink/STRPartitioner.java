@@ -24,7 +24,6 @@ public class STRPartitioner implements Partitioner<Point> {
         List<RTreeNode> rTreeNodes = this.rTree.search(point);
         // If we could not find MBR which contains the Point, then get all leaf nodes and calculate the distance
         if(rTreeNodes == null || rTreeNodes.isEmpty()){
-            System.out.println("Not matched");
             rTreeNodes = this.rTree.getLeafNodes();
         }
 
@@ -43,7 +42,6 @@ public class STRPartitioner implements Partitioner<Point> {
             }
         }
 
-        System.out.println("Partition: " + chosenPPoint.getPartitionNumber());
         return chosenPPoint.getPartitionNumber();
     }
 

@@ -2,9 +2,8 @@ package flink.test;
 
 import flink.RTree;
 import flink.STRPartitioner;
+import flink.datatype.Point;
 import org.apache.flink.api.java.DataSet;
-
-import java.util.List;
 
 /**
  * Created by JML on 5/19/17.
@@ -12,16 +11,14 @@ import java.util.List;
 public class IndexBuilderResult {
     private RTree globalRTree;
     private DataSet<RTree> localRTree;
-    private STRPartitioner strPartitioner;
+    private STRPartitioner partitioner;
+    private DataSet<Point> data;
 
-    public IndexBuilderResult(RTree globalRTree, DataSet<RTree> localRTree, STRPartitioner strPartitioner) {
+    public IndexBuilderResult(DataSet<Point> data, RTree globalRTree, DataSet<RTree> localRTree, STRPartitioner strPartitioner) {
+        this.data = data;
         this.globalRTree = globalRTree;
         this.localRTree = localRTree;
-        this.strPartitioner = strPartitioner;
-    }
-
-    public List<RTree> getLocalRTreeArray() throws Exception {
-        return localRTree.collect();
+        this.partitioner = strPartitioner;
     }
 
     public RTree getGlobalRTree() {
@@ -40,11 +37,19 @@ public class IndexBuilderResult {
         this.localRTree = localRTree;
     }
 
-    public STRPartitioner getStrPartitioner() {
-        return strPartitioner;
+    public STRPartitioner getPartitioner() {
+        return partitioner;
     }
 
-    public void setStrPartitioner(STRPartitioner strPartitioner) {
-        this.strPartitioner = strPartitioner;
+    public void setPartitioner(STRPartitioner partitioner) {
+        this.partitioner = partitioner;
+    }
+
+    public DataSet<Point> getData() {
+        return data;
+    }
+
+    public void setData(DataSet<Point> data) {
+        this.data = data;
     }
 }
