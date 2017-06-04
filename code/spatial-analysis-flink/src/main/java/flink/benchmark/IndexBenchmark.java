@@ -6,7 +6,6 @@ import flink.datatype.Point;
 import flink.test.IndexBuilderResult;
 import flink.util.Utils;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.io.FileOutputFormat;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.TextOutputFormat;
@@ -15,7 +14,6 @@ import org.apache.flink.core.fs.FileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Date;
 
 /**

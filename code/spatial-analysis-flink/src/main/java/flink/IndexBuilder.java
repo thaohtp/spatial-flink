@@ -9,6 +9,7 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.DataSetUtils;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
 
 import java.io.Serializable;
@@ -90,7 +91,8 @@ public class IndexBuilder implements Serializable {
         });
 
         // Step 3: build global RTree
-        DataSet<RTree> globalRTree = localRTree.reduceGroup(new GroupReduceFunction<RTree, RTree>() {
+        DataSet<RTree> globalRTree = localRTree.reduceGroup(new RichGroupReduceFunction<RTree, RTree>() {
+
             @Override
             public void reduce(Iterable<RTree> iterable, Collector<RTree> collector) throws Exception {
                 Iterator<RTree> rtreeIter = iterable.iterator();
@@ -153,7 +155,7 @@ public class IndexBuilder implements Serializable {
                     }
                 });
 
-        final Tuple2<MBR, Integer> globalBound = globalBoundDS.collect().get(0);
+//        final Tuple2<MBR, Integer> globalBound = globalBoundDS.collect().get(0);
 
         // calculate number of MBRs on each dimension
         // the idea is the total number of mbr over all dimensions will be equal to parallelism
@@ -171,6 +173,15 @@ public class IndexBuilder implements Serializable {
         final DataSet<Point> sampleData = DataSetUtils.sample(data, withReplacement, sampleRate);
 
         DataSet<RTree> rTrees = sampleData.reduceGroup(new RichGroupReduceFunction<Point, RTree>() {
+            private MBR globalBound;
+
+            @Override
+            public void open(Configuration parameters) throws Exception {
+                super.open(parameters);
+                this.globalBound = ((Tuple2<MBR,Integer>)this.getRuntimeContext().getBroadcastVariable("globalBoundDS").get(0)).f0;
+
+            }
+
             @Override
             public void reduce(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
                 List<Point> samplePoints = new ArrayList<Point>();
@@ -182,7 +193,7 @@ public class IndexBuilder implements Serializable {
                 // calculate number nodes per entry
                 float[] lowerBounds = new float[nbDimension];
                 float[] upperBounds = new float[nbDimension];
-                List<MBR> mbrBounds = packPointsIntoMBR(samplePoints, nbMBRs, lowerBounds, upperBounds, nbDimension, 0, globalBound.f0);
+                List<MBR> mbrBounds = packPointsIntoMBR(samplePoints, nbMBRs, lowerBounds, upperBounds, nbDimension, 0, this.globalBound);
 
                 // From MBR, create partition points (MBR, partition). The idea is to distribute each MBR to each partition
                 List<PartitionedMBR> partitionedMBRs = new ArrayList<PartitionedMBR>(mbrBounds.size());
@@ -195,7 +206,7 @@ public class IndexBuilder implements Serializable {
                 RTree rTree = createGlobalRTree(partitionedMBRs, nbDimension, maxNodePerEntry);
                 collector.collect(rTree);
             }
-        });
+        }).withBroadcastSet(globalBoundDS, "globalBoundDS");
 
         return new STRPartitioner(rTrees.collect().get(0));
     }
