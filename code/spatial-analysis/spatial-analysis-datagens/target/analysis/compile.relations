@@ -1,0 +1,50 @@
+products:
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Dictionary.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Dictionary$$anonfun$word$1.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Dictionary.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Dictionary$$anonfun$words$1.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Dictionary.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Dictionary.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Distributions$.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Distributions$Binomial$.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Distributions$Binomial.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Distributions$DiscreteDistribution.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Distributions$DiscreteUniform$.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Distributions$DiscreteUniform.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Distributions$Zipf$.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Distributions$Zipf.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/Distributions.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/WordGenerator$$anonfun$main$1.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/WordGenerator$.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/WordGenerator$Patterns$.class
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> spatial-analysis-datagens/target/classes/flink/datagen/flink/WordGenerator.class
+binary dependencies:
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Dictionary.scala -> /Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home/jre/lib/rt.jar
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Dictionary.scala -> /Users/JML/.m2/repository/org/scala-lang/scala-library/2.10.5/scala-library-2.10.5.jar
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> /Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home/jre/lib/rt.jar
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> /Users/JML/.m2/repository/org/apache/commons/commons-math3/3.5/commons-math3-3.5.jar
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> /Users/JML/.m2/repository/org/scala-lang/scala-library/2.10.5/scala-library-2.10.5.jar
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> /Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home/jre/lib/rt.jar
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> /Users/JML/.m2/repository/org/apache/flink/flink-core/1.0.3/flink-core-1.0.3.jar
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> /Users/JML/.m2/repository/org/apache/flink/flink-scala_2.10/1.0.3/flink-scala_2.10-1.0.3.jar
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> /Users/JML/.m2/repository/org/scala-lang/scala-library/2.10.5/scala-library-2.10.5.jar
+source dependencies:
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Dictionary.scala -> spatial-analysis-datagens/src/main/java/flink/datagen/util/RanHash.java
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> spatial-analysis-datagens/src/main/java/flink/datagen/util/RanHash.java
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Dictionary.scala
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala
+external dependencies:
+class names:
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Dictionary.scala -> flink.datagen.flink.Dictionary
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Dictionary.scala -> flink.datagen.flink.Dictionary$$anonfun$word$1
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Dictionary.scala -> flink.datagen.flink.Dictionary$$anonfun$words$1
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> flink.datagen.flink.Distributions
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> flink.datagen.flink.Distributions$
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> flink.datagen.flink.Distributions$Binomial
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> flink.datagen.flink.Distributions$Binomial$
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> flink.datagen.flink.Distributions$DiscreteDistribution
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> flink.datagen.flink.Distributions$DiscreteUniform
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> flink.datagen.flink.Distributions$DiscreteUniform$
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> flink.datagen.flink.Distributions$Zipf
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/Distributions.scala -> flink.datagen.flink.Distributions$Zipf$
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> flink.datagen.flink.WordGenerator
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> flink.datagen.flink.WordGenerator$
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> flink.datagen.flink.WordGenerator$$anonfun$main$1
+   spatial-analysis-datagens/src/main/scala/flink/datagen/flink/WordGenerator.scala -> flink.datagen.flink.WordGenerator$Patterns$

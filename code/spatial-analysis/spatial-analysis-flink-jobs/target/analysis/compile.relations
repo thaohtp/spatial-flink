@@ -1,0 +1,23 @@
+products:
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> spatial-analysis-flink-jobs/target/classes/flink/flink/FlinkWC$$anon$2$$anon$1.class
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> spatial-analysis-flink-jobs/target/classes/flink/flink/FlinkWC$$anon$2$$anonfun$createSerializer$1.class
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> spatial-analysis-flink-jobs/target/classes/flink/flink/FlinkWC$$anon$2.class
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> spatial-analysis-flink-jobs/target/classes/flink/flink/FlinkWC$$anonfun$1.class
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> spatial-analysis-flink-jobs/target/classes/flink/flink/FlinkWC$$anonfun$2.class
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> spatial-analysis-flink-jobs/target/classes/flink/flink/FlinkWC$.class
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> spatial-analysis-flink-jobs/target/classes/flink/flink/FlinkWC.class
+binary dependencies:
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> /Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home/jre/lib/rt.jar
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> /Users/JML/.m2/repository/org/apache/flink/flink-core/1.2.0/flink-core-1.2.0.jar
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> /Users/JML/.m2/repository/org/apache/flink/flink-scala_2.10/1.2.0/flink-scala_2.10-1.2.0.jar
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> /Users/JML/.m2/repository/org/scala-lang/scala-library/2.10.5/scala-library-2.10.5.jar
+source dependencies:
+external dependencies:
+class names:
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> flink.flink.FlinkWC
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> flink.flink.FlinkWC$
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> flink.flink.FlinkWC$$anon$2
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> flink.flink.FlinkWC$$anon$2$$anon$1
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> flink.flink.FlinkWC$$anon$2$$anonfun$createSerializer$1
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> flink.flink.FlinkWC$$anonfun$1
+   spatial-analysis-flink-jobs/src/main/scala/flink/flink/FlinkWC.scala -> flink.flink.FlinkWC$$anonfun$2
