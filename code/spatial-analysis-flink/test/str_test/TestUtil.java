@@ -1,6 +1,6 @@
 package str_test;
 
-import flink.datatype.Point;
+import de.tu_berlin.dima.datatype.Point;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,11 +1,11 @@
 package str_test;
 
-import flink.IndexBuilder;
-import flink.RTree;
-import flink.STRPartitioner;
-import flink.datatype.Point;
-import flink.datatype.RTreeNode;
-import flink.test.IndexBuilderResult;
+import de.tu_berlin.dima.IndexBuilder;
+import de.tu_berlin.dima.RTree;
+import de.tu_berlin.dima.STRPartitioner;
+import de.tu_berlin.dima.datatype.Point;
+import de.tu_berlin.dima.datatype.RTreeNode;
+import de.tu_berlin.dima.test.IndexBuilderResult;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.junit.Assert;

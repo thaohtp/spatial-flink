@@ -1,9 +1,9 @@
 package str_test;
 
-import flink.RTree;
-import flink.STRPacking;
-import flink.datatype.Point;
-import flink.datatype.RTreeNode;
+import de.tu_berlin.dima.RTree;
+import de.tu_berlin.dima.STRPacking;
+import de.tu_berlin.dima.datatype.Point;
+import de.tu_berlin.dima.datatype.RTreeNode;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 

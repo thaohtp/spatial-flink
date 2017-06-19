@@ -1,4 +1,4 @@
-package flink.datatype;
+package de.tu_berlin.dima.datatype;
 
 import java.io.Serializable;
 import java.util.ArrayList;

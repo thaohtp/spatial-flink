@@ -1,6 +1,7 @@
-package flink.util;
+package de.tu_berlin.dima.util;
 
-import flink.datatype.Point;
+import de.tu_berlin.dima.datatype.Point;
+import de.tu_berlin.dima.datatype.Point;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,6 @@
-package flink;
+package de.tu_berlin.dima;
 
-import flink.datatype.*;
+import de.tu_berlin.dima.datatype.*;
 
 import java.util.ArrayList;
 import java.util.Collections;

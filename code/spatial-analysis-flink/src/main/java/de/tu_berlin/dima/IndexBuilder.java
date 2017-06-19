@@ -1,8 +1,9 @@
-package flink;
+package de.tu_berlin.dima;
 
-import flink.datatype.*;
-import flink.test.IndexBuilderResult;
-import flink.util.PointComparator;
+import de.tu_berlin.dima.datatype.*;
+import de.tu_berlin.dima.util.PointComparator;
+import de.tu_berlin.dima.test.IndexBuilderResult;
+import de.tu_berlin.dima.util.PointComparator;
 import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;

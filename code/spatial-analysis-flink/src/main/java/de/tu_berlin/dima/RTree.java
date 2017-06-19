@@ -1,7 +1,7 @@
-package flink;
+package de.tu_berlin.dima;
 
-import flink.datatype.Point;
-import flink.datatype.RTreeNode;
+import de.tu_berlin.dima.datatype.Point;
+import de.tu_berlin.dima.datatype.RTreeNode;
 
 import java.io.Serializable;
 import java.util.ArrayList;

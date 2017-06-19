@@ -1,20 +1,32 @@
-package flink.benchmark;
+package de.tu_berlin.dima.benchmark;
 
-import flink.IndexBuilder;
-import flink.RTree;
-import flink.datatype.Point;
-import flink.test.IndexBuilderResult;
-import flink.util.Utils;
+import com.esotericsoftware.kryo.serializers.DefaultSerializers;
+import de.tu_berlin.dima.RTree;
+import de.tu_berlin.dima.IndexBuilder;
+import de.tu_berlin.dima.RTree;
+import de.tu_berlin.dima.datatype.Point;
+import de.tu_berlin.dima.datatype.RTreeNode;
+import de.tu_berlin.dima.test.IndexBuilderResult;
+import de.tu_berlin.dima.util.Utils;
+import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator;
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.TextOutputFormat;
+import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem;
+import org.apache.flink.metrics.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.instrument.Instrumentation;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Created by JML on 5/23/17.
@@ -37,6 +49,8 @@ public class IndexBenchmark {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         // make params available on web interface
         env.getConfig().setGlobalJobParameters(params);
+        env.getConfig().registerTypeWithKryoSerializer(RTreeNode.class, DefaultSerializers.KryoSerializableSerializer.class);
+
 
         DataSet<Point> data = env.readTextFile(input)
                 .map(new MapFunction<String, Point>() {
@@ -78,12 +92,29 @@ public class IndexBenchmark {
         System.out.println("---------------- End statistics -------------");
 
         System.out.println("\n---------------- Local trees -------------");
-        localTrees.map(new MapFunction<RTree, String>() {
+        localTrees.map(new RichMapFunction<RTree, String>() {
+
+            private Counter counter;
+
+            @Override
+            public void open(Configuration config) {
+                this.counter = getRuntimeContext()
+                        .getMetricGroup()
+                        .counter("myCounter");
+            }
+
+
             @Override
             public String map(RTree rTree) throws Exception {
+                this.counter.inc();
+                System.out.println("Metrics: " + getRuntimeContext().getMetricGroup().getMetricIdentifier("Memory.Heap.Used"));
                 return "Local tree: ," + rTree.getRootNode().getSize() + "," + rTree.getRootNode().getMbr();
             }
         }).print();
+
+//        localTrees.writeAsText(localRTreeOutput);
+//        env.execute("Write as text");
+
         System.out.println("---------------- End local trees ---------");
 
         System.out.println("\n---------------- Global tree -------------");
@@ -92,5 +123,9 @@ public class IndexBenchmark {
         System.out.println("---------------- End global tree ---------");
 
         // benchmark index storage over head
+
+        System.out.println("Size of object: " + ObjectSizeCalculator.getObjectSize(localTrees));
+        JobExecutionResult res = env.getLastJobExecutionResult();
+        System.out.println(res.getAllAccumulatorResults());
     }
 }

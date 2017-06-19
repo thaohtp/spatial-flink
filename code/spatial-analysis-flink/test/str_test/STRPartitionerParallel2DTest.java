@@ -1,12 +1,17 @@
 package str_test;
 
+import de.tu_berlin.dima.IndexBuilder;
 import de.tu_berlin.dima.RTree;
 import de.tu_berlin.dima.STRPacking;
+import de.tu_berlin.dima.STRPartitioner;
+import de.tu_berlin.dima.datatype.MBR;
 import de.tu_berlin.dima.datatype.PointLeafNode;
 import de.tu_berlin.dima.datatype.Point;
 import de.tu_berlin.dima.datatype.RTreeNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.ExecutionEnvironment;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,7 +21,7 @@ import java.util.List;
 /**
  * Created by JML on 4/24/17.
  */
-public class STRPacking2DTest {
+public class STRPartitionerParallel2DTest {
     private static final int POINTS_PER_NODE = 3;
     private static final int NB_DIMENSION = 2;
     private List<Point> pointList = new ArrayList<Point>();
@@ -64,8 +69,15 @@ public class STRPacking2DTest {
     }
 
     private RTree createAndPrintTree(List<Point> points, int pointPerNode, int nbDimension) throws Exception {
-        STRPacking str = new STRPacking(pointPerNode, nbDimension);
-        RTree rTree = str.createRTree(points);
+        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        DataSet<Point> dataSet = env.fromCollection(this.pointList);
+
+        double sampleRate = 0.5;
+        int parallelism = env.getParallelism();
+
+        IndexBuilder indexBuilder = new IndexBuilder();
+        STRPartitioner partitioner = indexBuilder.createSTRPartitionerTestVersion(dataSet, dataSet, nbDimension, pointPerNode, sampleRate, parallelism);
+        RTree rTree = partitioner.getrTree();
 
         System.out.println("Test createCreateTree2D");
         System.out.println("-- Input points: ");
@@ -105,28 +117,29 @@ public class STRPacking2DTest {
         // get leaves of prepare data
         int depth = 2;
         Assert.assertEquals("Test tree depth", depth, getTreeDepth(rTree));
+        // MBRLeafNode
         List<RTreeNode> leafNodes = getLeafNode(rTree);
+        System.out.println("Number of leaf nodes: " + leafNodes.size());
 
         int nbLeaf = 2;
         Assert.assertEquals("Test number of leaves", nbLeaf, leafNodes.size());
 
         // test each leaves
-        PointLeafNode expPointLeafNode1 = new PointLeafNode(this.NB_DIMENSION);
+        MBR expPointLeafNode1 = new MBR(this.NB_DIMENSION);
         expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,0));
         expPointLeafNode1.addPoint(TestUtil.create2DPoint(1,2));
         expPointLeafNode1.addPoint(TestUtil.create2DPoint(2,2));
-        Assert.assertEquals("Test leaf 1", expPointLeafNode1, leafNodes.get(0));
+//        Assert.assertEquals("Test leaf 1", expPointLeafNode1, leafNodes.get(0));
 
-
-        PointLeafNode expPointLeafNode2 = new PointLeafNode(this.NB_DIMENSION);
+        MBR expPointLeafNode2 = new MBR(this.NB_DIMENSION);
         expPointLeafNode2.addPoint(TestUtil.create2DPoint(10,4));
         expPointLeafNode2.addPoint(TestUtil.create2DPoint(-1,5));
         expPointLeafNode2.addPoint(TestUtil.create2DPoint(3,9));
-        Assert.assertEquals("Test leaf 2", expPointLeafNode2, leafNodes.get(1));
+//        Assert.assertEquals("Test leaf 2", expPointLeafNode2, leafNodes.get(1));
 
         // test MBR values
-        Assert.assertEquals("Test MBR of leaf 1", expPointLeafNode1.getMbr(), leafNodes.get(0).getMbr());
-        Assert.assertEquals("Test MBR of leaf 2", expPointLeafNode2.getMbr(), leafNodes.get(1).getMbr());
+        Assert.assertEquals("Test MBR of leaf 1", expPointLeafNode1, leafNodes.get(0).getChildNodes().get(0));
+        Assert.assertEquals("Test MBR of leaf 2", expPointLeafNode2, leafNodes.get(0).getChildNodes().get(1));
 
     }
 

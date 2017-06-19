@@ -1,8 +1,10 @@
-package flink.test;
+package de.tu_berlin.dima.test;
 
-import flink.RTree;
-import flink.STRPartitioner;
-import flink.datatype.Point;
+import de.tu_berlin.dima.RTree;
+import de.tu_berlin.dima.datatype.Point;
+import de.tu_berlin.dima.RTree;
+import de.tu_berlin.dima.STRPartitioner;
+import de.tu_berlin.dima.datatype.Point;
 import org.apache.flink.api.java.DataSet;
 
 /**

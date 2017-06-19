@@ -1,4 +1,4 @@
-package flink.datatype;
+package de.tu_berlin.dima.datatype;
 
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputView;

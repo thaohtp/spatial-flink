@@ -1,9 +1,12 @@
-package flink;
+package de.tu_berlin.dima;
 
-import flink.datatype.MBRLeafNode;
-import flink.datatype.PartitionedMBR;
-import flink.datatype.Point;
-import flink.datatype.RTreeNode;
+import de.tu_berlin.dima.datatype.MBRLeafNode;
+import de.tu_berlin.dima.datatype.Point;
+import de.tu_berlin.dima.datatype.RTreeNode;
+import de.tu_berlin.dima.datatype.MBRLeafNode;
+import de.tu_berlin.dima.datatype.PartitionedMBR;
+import de.tu_berlin.dima.datatype.Point;
+import de.tu_berlin.dima.datatype.RTreeNode;
 import org.apache.flink.api.common.functions.Partitioner;
 
 import java.util.List;

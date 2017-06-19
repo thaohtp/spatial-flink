@@ -1,4 +1,4 @@
-package flink.datatype;
+package de.tu_berlin.dima.datatype;
 
 /**
  * Created by JML on 4/25/17.
