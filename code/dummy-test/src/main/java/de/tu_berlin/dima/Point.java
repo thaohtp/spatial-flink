@@ -1,4 +1,4 @@
-package flink;
+package de.tu_berlin.dima;
 
 /**
  * Created by JML on 2/22/17.

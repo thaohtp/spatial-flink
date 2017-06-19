@@ -1,4 +1,4 @@
-package flink;
+package de.tu_berlin.dima;
 
 import org.apache.flink.api.common.functions.MapPartitionFunction;
 import org.apache.flink.api.common.functions.Partitioner;
