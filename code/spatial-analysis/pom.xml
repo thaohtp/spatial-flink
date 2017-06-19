@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>flink</groupId>
+    <groupId>de.tu_berlin.dima</groupId>
     <artifactId>spatial-analysis</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -19,7 +19,7 @@
         <maven-source-plugin.version>2.1.2</maven-source-plugin.version>
         <maven-jar-plugin.version>2.4</maven-jar-plugin.version>
         <maven-shade-plugin.version>2.3</maven-shade-plugin.version>
-        <scala-maven-plugin.version>3.2.1</scala-maven-plugin.version>
+        <scala-maven-plugin.version>3.1.6</scala-maven-plugin.version>
 
         <!-- Java -->
         <java.version>1.8</java.version>
@@ -51,6 +51,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>spatial-analysis-flink-jobs</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>spatial-analysis-spark-jobs</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
 
@@ -165,10 +170,12 @@
             </plugins>
         </pluginManagement>
     </build>
+
   <modules>
     <module>spatial-analysis-bundle</module>
     <module>spatial-analysis-peelextensions</module>
     <module>spatial-analysis-datagens</module>
     <module>spatial-analysis-flink-jobs</module>
+    <module>spatial-analysis-spark-jobs</module>
   </modules>
 </project>

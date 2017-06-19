@@ -4,7 +4,7 @@ If you do not have a host-specific environment configuration for your developer 
 
 ```bash
 git clone \
-    git@github.com:peelframework/peelconfig.devhost.git \
+    git@github.com:stratosphere/peelconfig.devhost.git \
     peel-wordcount-bundle/src/main/resources/config/hosts/$HOSTNAME
 ```
 
@@ -12,7 +12,7 @@ We offer an example *ACME* cluster configuration that you use as a starting poin
 
 ```bash
 git clone \
-    git@github.com:peelframework/peelconfig.acme.git \
+    git@github.com:stratosphere/peelconfig.acme.git \
     peel-wordcount-bundle/src/main/resources/config/hosts/$ENV
 ```
 

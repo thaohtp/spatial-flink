@@ -1,0 +1,41 @@
+# load common config
+# load gplsPath.'/settings.gpl'
+
+# PNG output
+set output basePath.'/total_CPU_performance_'.suite.'_'.experiment.'_'.run.'.png'
+
+set terminal png size 680,500 enhanced truecolor font 'Verdana,10'
+
+# text
+set title 'CPU performance for ('.suite.', '.experiment.', '.run.')'
+set ylabel "CPU usage"
+set xlabel "Time"
+
+set pointsize 0.8
+set border 11
+set xtics border font 'Verdana,7' # out rotate by 45 center offset 0,-1
+set tics front
+set key below
+
+# set axis range
+stats dataPath u 2:3 nooutput
+set xrange [STATS_min_x:STATS_max_x]
+set yrange [0:1]
+
+
+# plot total cpu usage for all hosts
+plot for [host in hosts] \
+     dataPath using 2:(stringcolumn(1) eq host? ($3+$4):1/0) title host with lines
+
+
+# plot total cpu usage per host
+do for [host in hosts] {
+     set output basePath.'/total_CPU_performance_'.suite.'_'.experiment.'_'.run.'_'.host.'.png'
+     set title '('.suite.', '.experiment.', '.run.', '.host.')'
+
+     plot dataPath using 2:(stringcolumn(1) eq host? ($3+$4):1/0) title 'usr' with filledcurves x1 lt rgb 'green', \
+          dataPath using 2:(stringcolumn(1) eq host? ($4):1/0) title 'sys' with filledcurves x1 lt rgb 'red'
+}
+
+
+

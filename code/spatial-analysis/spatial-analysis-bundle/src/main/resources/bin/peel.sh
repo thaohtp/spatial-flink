@@ -38,7 +38,8 @@ manglePathList() {
 }
 
 ########################################################################################################################
-# DEFAULT CONFIG VALUES
+# DEFAULT CONFIG VALUES: These values will be used when nothing has been specified in conf/stratosphere-conf.yaml
+# -or- the respective environment variables are not set.
 ########################################################################################################################
 
 DEFAULT_JAVA_HOME="/usr/lib/jvm/java-8-oracle"      # Java home
@@ -99,3 +100,4 @@ CLASSPATH=`manglePathList $( echo ${PEEL_LIB_DIR}/*.jar . | sed 's/ /:/g' )`
 
 # Run command
 ${JAVA_RUN} -cp ${CLASSPATH} ${PEEL_JAVA_OPTS} org.peelframework.core.cli.Peel $@
+

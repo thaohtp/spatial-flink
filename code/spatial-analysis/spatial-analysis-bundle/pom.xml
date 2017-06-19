@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>flink</groupId>
+        <groupId>de.tu_berlin.dima</groupId>
         <artifactId>spatial-analysis</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
@@ -21,9 +21,7 @@
 
     <properties>
         <!-- MonetDB JDBC driver -->
-        <monetdb.version>2.19</monetdb.version>
-        <!-- PostgreSQL driver -->
-        <postgresql.version>9.4.1208</postgresql.version>
+        <monetdb.version>11.19.15</monetdb.version>
         <!-- bundle binaries parent folder -->
         <bundle.bin>${env.BUNDLE_BIN}</bundle.bin>
         <!-- Assembly file path -->
@@ -44,6 +42,10 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>spatial-analysis-flink-jobs</artifactId>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>spatial-analysis-spark-jobs</artifactId>
+        </dependency>
 
         <!-- Peel -->
         <dependency>
@@ -60,14 +62,6 @@
             <groupId>monetdb</groupId>
             <artifactId>monetdb-jdbc</artifactId>
             <version>${monetdb.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- PostgreSQL JDBC driver -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
             <scope>runtime</scope>
         </dependency>
     </dependencies>

@@ -1,0 +1,43 @@
+# load common config
+# load gplsPath.'/settings.gpl'
+
+# SVG output
+set output basePath.'/network_performance_'.suite.'_'.experiment.'_'.run.'.svg'
+
+set terminal svg size 680,500 enhanced font 'Verdana,10'
+
+# text
+set title 'Network performance for ('.suite.', '.experiment.', '.run.')'
+set ylabel "Network usage (kB)"
+set xlabel "Time"
+
+set pointsize 0.8
+set border 11
+set xtics border font 'Verdana,7' # out rotate by 45 center offset 0,-1
+set tics front
+set key below
+
+# set axis range
+stats dataPath u 2:3 nooutput
+set xrange [STATS_min_x:STATS_max_x]
+set yrange [0:STATS_max_y*2] # from 0 to 250,000 kB (send and receive with 1 Gbps full-duplex)
+
+
+# plot total network usage for all hosts
+plot for [host in hosts] \
+     dataPath using 2:(stringcolumn(1) eq host? ($3+$4):1/0) title host with lines
+
+
+set yrange [0:STATS_max_y] # from 0 to 125,000 kB
+
+# plot total network usage per host
+do for [host in hosts] {
+     set output basePath.'/network_performance_'.suite.'_'.experiment.'_'.run.'_'.host.'.svg'
+     set title '('.suite.', '.experiment.', '.run.', '.host.')'
+
+     plot dataPath using 2:(stringcolumn(1) eq host? ($3):1/0) title 'send' with line lt rgb 'green', \
+          dataPath using 2:(stringcolumn(1) eq host? ($4):1/0) title 'recv' with line lt rgb 'red'
+}
+
+
+

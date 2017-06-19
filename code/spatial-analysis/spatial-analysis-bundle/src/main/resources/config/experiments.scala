@@ -5,8 +5,8 @@ import org.springframework.context.{ApplicationContext, ApplicationContextAware}
 
 /** Experiments definitions for the 'spatial-analysis' bundle. */
 @Configuration
-@ComponentScan( // Scan for annotated Peel components in the 'flink' package
-  value = Array("flink"),
+@ComponentScan( // Scan for annotated Peel components in the 'de.tu_berlin.dima.bdapro' package
+  value = Array("de.tu_berlin.dima"),
   useDefaultFilters = false,
   includeFilters = Array[ComponentScan.Filter](
     new ComponentScan.Filter(value = Array(classOf[org.springframework.stereotype.Service])),
@@ -18,9 +18,14 @@ import org.springframework.context.{ApplicationContext, ApplicationContextAware}
   "classpath:peel-extensions.xml"
 ))
 @Import(value = Array(
-  classOf[org.peelframework.extensions], // custom system beans
-  classOf[config.fixtures.systems],      // custom system beans
-  classOf[config.fixtures.wordcount]     // wordcount experiment beans
+  classOf[org.peelframework.extensions],   // custom system beans
+  classOf[config.fixtures.systems],        // custom system beans
+  classOf[config.fixtures.wordcount],      // wordcount experiment beans
+  classOf[config.fixtures.oddsemordnilaps],
+  classOf[config.fixtures.palindrome],
+  classOf[config.fixtures.spatialanalysiss1],
+  classOf[config.fixtures.spatialanalysiss5],
+  classOf[config.fixtures.spatialanalysiss10]
 ))
 class experiments extends ApplicationContextAware {
 
