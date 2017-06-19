@@ -1,5 +1,0 @@
-export BUNDLE_BIN="/jml/apps/Peel/bin"
-export BUNDLE_SRC="/jml/data/d/1 CLASS STUDY/1 Lecture/1 IT4BI Second/0 Thesis/3 Lab/spatial-flink/code/spatial-analysis"
-export BUNDLE_GID="flink"
-export BUNDLE_AID="spatial-analysis"
-export BUNDLE_PKG="flink"
