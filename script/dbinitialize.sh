@@ -1,5 +1,5 @@
 echo "Current directory: $(pwd)"
-export $CUR_DIR="$(pwd)"
+export CUR_DIR="$(pwd)"
 
 echo "Switch to bundle directory: $BUNDLE_BIN/$BUNDLE_AID"
 cd "$BUNDLE_BIN/$BUNDLE_AID"        # go to your bundle root
