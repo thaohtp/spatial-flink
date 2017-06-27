@@ -123,6 +123,7 @@ public class MBR implements Serializable{
 
     //TODO: check if MBR is contain in this MBR or not
     public boolean contains(MBR mbr){
+        // check MBR
         return true;
     }
 
@@ -155,6 +156,27 @@ public class MBR implements Serializable{
             distance = distance + Math.pow(distanceL1, 2);
         }
         return Math.sqrt(distance);
+    }
+
+    public boolean intersects(MBR mbr){
+        float[] point1 = new float[2];
+        point1[0] = mbr.getMinPoint().getDimension(0);
+        point1[1] = mbr.getMaxPoint().getDimension(1);
+        Point p1 = new Point(point1);
+        float[] point2 = new float[2];
+        point2[0] = mbr.getMaxPoint().getDimension(0);
+        point2[1] = mbr.getMinPoint().getDimension(1);
+        Point p2 = new Point(point2);
+
+        if(this.contains(p1) || this.contains(p2) || this.contains(mbr.getMinPoint()) || this.contains(mbr.getMaxPoint())){
+            return true;
+        }
+        else{
+            if(mbr.contains(this)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isInitialized() {
