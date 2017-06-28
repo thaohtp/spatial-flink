@@ -15,6 +15,7 @@ public class MBR implements Serializable{
     private boolean isInitialized = true;
     private int nbDimension;
     private long size;
+    private int numBytes;
 
     public MBR(int nbDimension){
         this.nbDimension = nbDimension;
@@ -200,5 +201,13 @@ public class MBR implements Serializable{
 
     public void setSize(long size) {
         this.size = size;
+    }
+
+    public int getNumBytes() {
+        return numBytes;
+    }
+
+    public void setNumBytes(int numBytes) {
+        this.numBytes = numBytes;
     }
 }

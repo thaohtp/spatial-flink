@@ -13,6 +13,8 @@ public class RTree implements Serializable{
 
     private RTreeNode rootNode;
 
+    private long numBytes;
+
     public RTree(RTreeNode rootNode){
         this.rootNode = rootNode;
     }
@@ -123,5 +125,13 @@ public class RTree implements Serializable{
             }
         }
         return result;
+    }
+
+    public long getNumBytes() {
+        return numBytes;
+    }
+
+    public void setNumBytes(long numBytes) {
+        this.numBytes = numBytes;
     }
 }
