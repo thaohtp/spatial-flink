@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class OperationExecutor {
 
-    public DataSet<Point> boxRangeQuery(final MBR box, DataSet<Point> partitionedData, DataSet<RTree> globalTree, DataSet<RTree> localTrees, int numPartitions, ExecutionEnvironment env){
+    public DataSet<Point> boxRangeQuery(final MBR box, DataSet<Point> partitionedData, DataSet<RTree> globalTree){
         // initialize empty vector
         DataSet<PartitionedMBR> partitionedMBRS = globalTree.flatMap(new RichFlatMapFunction<RTree, PartitionedMBR>() {
             @Override

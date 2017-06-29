@@ -82,7 +82,7 @@ public class OperationExecutorTest {
         mbr.addPoint(p1);
         mbr.addPoint(p2);
 
-        DataSet<Point> result = this.operationExecutor.boxRangeQuery(mbr, partitionedData, globalTree, localTrees, 4, env);
+        DataSet<Point> result = this.operationExecutor.boxRangeQuery(mbr, partitionedData, globalTree);
         result.print();
     }
 }
