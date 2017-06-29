@@ -11,23 +11,23 @@ import org.apache.flink.api.java.DataSet;
  * Created by JML on 5/19/17.
  */
 public class IndexBuilderResult {
-    private RTree globalRTree;
+    private DataSet<RTree> globalRTree;
     private DataSet<RTree> localRTree;
     private STRPartitioner partitioner;
     private DataSet<Point> data;
 
-    public IndexBuilderResult(DataSet<Point> data, RTree globalRTree, DataSet<RTree> localRTree, STRPartitioner strPartitioner) {
+    public IndexBuilderResult(DataSet<Point> data, DataSet<RTree> globalRTree, DataSet<RTree> localRTree, STRPartitioner strPartitioner) {
         this.data = data;
         this.globalRTree = globalRTree;
         this.localRTree = localRTree;
         this.partitioner = strPartitioner;
     }
 
-    public RTree getGlobalRTree() {
+    public DataSet<RTree> getGlobalRTree() {
         return globalRTree;
     }
 
-    public void setGlobalRTree(RTree globalRTree) {
+    public void setGlobalRTree(DataSet<RTree> globalRTree) {
         this.globalRTree = globalRTree;
     }
 

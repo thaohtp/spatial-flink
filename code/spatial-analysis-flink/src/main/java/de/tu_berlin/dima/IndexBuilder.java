@@ -1,7 +1,6 @@
 package de.tu_berlin.dima;
 
 import de.tu_berlin.dima.datatype.*;
-import de.tu_berlin.dima.util.PointComparator;
 import de.tu_berlin.dima.test.IndexBuilderResult;
 import de.tu_berlin.dima.util.PointComparator;
 import org.apache.flink.api.common.functions.*;
@@ -117,8 +116,7 @@ public class IndexBuilder implements Serializable {
                     }
         });
 
-        IndexBuilderResult result = new IndexBuilderResult(partitionedData, globalRTree.collect().get(0), localRTree, partitioner);
-        return result;
+        return new IndexBuilderResult(partitionedData, globalRTree, localRTree, partitioner);
     }
 
 
@@ -519,14 +517,10 @@ public class IndexBuilder implements Serializable {
         boolean withReplacement = false;
         STRPartitioner partitioner = createSTRPartitioner(data, nbDimension, nbNodePerEntry, sampleRate, parallelism);
 
-        System.out.println("Before partitioning");
         List<RTreeNode> leafNodes = partitioner.getrTree().getLeafNodes();
         for (RTreeNode node : leafNodes) {
             MBRLeafNode leaf = (MBRLeafNode) node;
             List<PartitionedMBR> entries = leaf.getEntries();
-            for (PartitionedMBR mbr : entries) {
-                System.out.println(mbr.getMbr().toString());
-            }
         }
 
         // Partition data
@@ -579,12 +573,7 @@ public class IndexBuilder implements Serializable {
                         collector.collect(globalTree);
                     }
                 });
-
-        globalRTree.print();
-        localRTree.print();
-
-        IndexBuilderResult result = new IndexBuilderResult(partitionedData, globalRTree.collect().get(0), localRTree, partitioner);
-        return result;
+        return new IndexBuilderResult(partitionedData, globalRTree, localRTree, partitioner);
     }
 
 

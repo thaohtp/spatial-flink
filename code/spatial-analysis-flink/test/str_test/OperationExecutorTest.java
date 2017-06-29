@@ -39,6 +39,11 @@ public class OperationExecutorTest {
         points.add(TestUtil.create2DPoint(11, 10));
     }
 
+    public static void main(String[] args) throws Exception {
+        OperationExecutorTest test = new OperationExecutorTest();
+        test.testBoxRangeQuery();
+    }
+
 
     // What to test
     // 1. Test STRPartitioner
@@ -68,7 +73,7 @@ public class OperationExecutorTest {
         System.out.println(indexResult.getLocalRTree().count());
 
         DataSet<Point> partitionedData = indexResult.getData();
-        RTree globalTree = indexResult.getGlobalRTree();
+        DataSet<RTree> globalTree = indexResult.getGlobalRTree();
         DataSet<RTree> localTrees = indexResult.getLocalRTree();
 
         Point p1 = TestUtil.create2DPoint(-1,-1);
@@ -77,7 +82,7 @@ public class OperationExecutorTest {
         mbr.addPoint(p1);
         mbr.addPoint(p2);
 
-        DataSet<Point> result = this.operationExecutor.boxRangeQuery(mbr, partitionedData, globalTree, localTrees, 4);
+        DataSet<Point> result = this.operationExecutor.boxRangeQuery(mbr, partitionedData, globalTree, localTrees, 4, env);
         result.print();
     }
 }
