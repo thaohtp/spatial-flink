@@ -13,6 +13,8 @@ public class RTreeNode implements Serializable {
 
     protected long size;
 
+    protected long numBytes;
+
     public RTreeNode(){
         this.size = 0;
     }
@@ -133,4 +135,11 @@ public class RTreeNode implements Serializable {
         this.size = size;
     }
 
+    public long getNumBytes() {
+        return numBytes;
+    }
+
+    public void setNumBytes(long numBytes) {
+        this.numBytes = numBytes;
+    }
 }

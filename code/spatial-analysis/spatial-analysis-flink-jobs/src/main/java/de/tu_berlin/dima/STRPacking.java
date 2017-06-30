@@ -1,11 +1,10 @@
 package de.tu_berlin.dima;
 
-import de.tu_berlin.dima.datatype.*;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import de.tu_berlin.dima.datatype.*;
 
 /**
  * Created by JML on 3/7/17.

@@ -1,12 +1,8 @@
 package de.tu_berlin.dima.benchmark;
 
-import com.esotericsoftware.kryo.serializers.DefaultSerializers;
-import de.tu_berlin.dima.IndexBuilder;
-import de.tu_berlin.dima.datatype.RTreeNode;
 import de.tu_berlin.dima.IndexBuilder;
 import de.tu_berlin.dima.RTree;
 import de.tu_berlin.dima.datatype.Point;
-import de.tu_berlin.dima.datatype.RTreeNode;
 import de.tu_berlin.dima.test.IndexBuilderResult;
 import de.tu_berlin.dima.util.Utils;
 import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator;
@@ -16,7 +12,6 @@ import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.TextOutputFormat;
-import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem;
@@ -24,10 +19,7 @@ import org.apache.flink.metrics.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.instrument.Instrumentation;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.Set;
 
 /**
  * Created by JML on 5/23/17.
@@ -50,8 +42,8 @@ public class IndexBenchmark {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         // make params available on web interface
         env.getConfig().setGlobalJobParameters(params);
-        env.getConfig().registerTypeWithKryoSerializer(RTreeNode.class, DefaultSerializers.KryoSerializableSerializer.class);
-
+        Utils.registerTypeWithKryoSerializer(env);
+//        Utils.registerCustomSerializer(env);
 
         DataSet<Point> data = env.readTextFile(input)
                 .map(new MapFunction<String, Point>() {
@@ -69,14 +61,13 @@ public class IndexBenchmark {
 
         Long startTime = System.currentTimeMillis();
         IndexBuilder indexBuilder = new IndexBuilder();
-//        DataSet<Point> partitionedData = indexBuilder.buildIndex(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
         IndexBuilderResult result = indexBuilder.buildIndex(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
         Long endTime = System.currentTimeMillis();
 
 
         // local rtree size
         final DataSet<RTree> localTrees = result.getLocalRTree();
-        RTree globalTree = result.getGlobalRTree();
+        RTree globalTree = result.getGlobalRTree().collect().get(0);
         DataSet<Point> partitionedData = result.getData();
 
         partitionedData.writeAsFormattedText(dataOutput, FileSystem.WriteMode.OVERWRITE, new TextOutputFormat.TextFormatter<Point>() {
@@ -124,9 +115,5 @@ public class IndexBenchmark {
         System.out.println("---------------- End global tree ---------");
 
         // benchmark index storage over head
-
-//        System.out.println("Size of object: " + ObjectSizeCalculator.getObjectSize(localTrees));
-        JobExecutionResult res = env.getLastJobExecutionResult();
-        System.out.println(res.getAllAccumulatorResults());
     }
 }

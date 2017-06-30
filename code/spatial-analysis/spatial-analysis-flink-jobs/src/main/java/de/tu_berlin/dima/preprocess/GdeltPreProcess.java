@@ -1,9 +1,6 @@
 package de.tu_berlin.dima.preprocess;
 
-import de.tu_berlin.dima.benchmark.IndexBenchmark;
 import org.apache.flink.api.common.functions.FilterFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.TextOutputFormat;

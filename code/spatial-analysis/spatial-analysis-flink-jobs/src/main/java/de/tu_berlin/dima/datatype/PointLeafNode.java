@@ -1,8 +1,6 @@
 package de.tu_berlin.dima.datatype;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by JML on 3/31/17.

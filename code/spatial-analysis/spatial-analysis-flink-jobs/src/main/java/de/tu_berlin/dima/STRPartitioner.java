@@ -1,7 +1,5 @@
 package de.tu_berlin.dima;
 
-import de.tu_berlin.dima.datatype.PartitionedMBR;
-import de.tu_berlin.dima.datatype.RTreeNode;
 import de.tu_berlin.dima.datatype.MBRLeafNode;
 import de.tu_berlin.dima.datatype.PartitionedMBR;
 import de.tu_berlin.dima.datatype.Point;
