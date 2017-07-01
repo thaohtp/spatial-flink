@@ -6,6 +6,8 @@ import de.tu_berlin.dima.STRPartitioner;
 import de.tu_berlin.dima.datatype.*;
 import de.tu_berlin.dima.serializer.*;
 import de.tu_berlin.dima.test.IndexBuilderResult;
+import de.tu_berlin.dima.util.Utils;
+import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.MapPartitionFunction;
 import org.apache.flink.api.common.functions.RichMapPartitionFunction;
 import org.apache.flink.api.java.DataSet;
@@ -59,6 +61,7 @@ public class IndexBuilder2DTest {
         samplePoints = points.subList(0, points.size()/2);
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        Utils.registerCustomSerializer(env);
         int parallelism = env.getParallelism();
         double sampleRate = 0.8;
 
@@ -71,8 +74,39 @@ public class IndexBuilder2DTest {
         RTree globalTree = result.getGlobalRTree().collect().get(0);
         System.out.println("Global tree: " + globalTree.toString());
         System.out.println("Local tree: ");
-        result.getLocalRTree().print();
-        System.out.println(result.getLocalRTree().count());
+
+        // Size of
+        // Points: 12
+        // MBR: 29
+        // PartitionedMBR: 33
+        // LeafNode: 39 + sizeOfEntries (Points or PartitionedMBR)
+        // NonLeafNode: 38 + sizeOfChildNodes (LeafNode or NonLeafNode)
+
+//        < (1.0,0.0)(1.0,2.0)(2.0,2.0) ,  > => 113B
+//        < (-1.0,5.0)(3.0,9.0) ,  > => 101B
+//        < (10.0,4.0) ,  > => 89B
+//        < (11.0,10.0) ,  > => 89B
+        // GlobalTree => 232B
+        List<RTree> localTrees = result.getLocalRTree().collect();
+        for(int i = 0; i<localTrees.size(); i++){
+            RTree tree = localTrees.get(i);
+            String treeString = tree.toString();
+            System.out.print(treeString);
+            LeafNode leaf = (LeafNode) tree.getLeafNodes().get(0);
+            if(leaf.getEntries().size() == 3){
+                Assert.assertEquals("Wrong memory size of < (1.0,0.0)(1.0,2.0)(2.0,2.0) ,  >", 113, tree.getNumBytes());
+            }
+            else{
+                if(leaf.getEntries().size() == 2){
+                    Assert.assertEquals("Wrong memory size of < (-1.0,5.0)(3.0,9.0) ,  >", 101, tree.getNumBytes());
+                }
+                else{
+                    Assert.assertEquals("Wrong memory size of " + treeString, 89, tree.getNumBytes());
+                }
+            }
+            System.out.println("Size: " + localTrees.get(i).getNumBytes());
+        }
+        Assert.assertEquals("Wrong memory size of global tree: ", 248, globalTree.getNumBytes());
     }
 
     @Test
