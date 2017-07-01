@@ -54,7 +54,7 @@ public class IndexBenchmark {
         // make params available on web interface
         env.getConfig().setGlobalJobParameters(params);
         Utils.registerTypeWithKryoSerializer(env);
-//        Utils.registerCustomSerializer(env);
+        Utils.registerCustomSerializer(env);
 
         DataSet<Point> data = env.readTextFile(input)
                 .map(new MapFunction<String, Point>() {
@@ -114,9 +114,6 @@ public class IndexBenchmark {
                 return "Local tree: ," + rTree.getRootNode().getSize() + "," + rTree.getRootNode().getMbr();
             }
         }).print();
-
-//        localTrees.writeAsText(localRTreeOutput);
-//        env.execute("Write as text");
 
         System.out.println("---------------- End local trees ---------");
 
