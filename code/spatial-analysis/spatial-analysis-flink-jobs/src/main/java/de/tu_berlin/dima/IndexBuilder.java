@@ -114,7 +114,7 @@ public class IndexBuilder implements Serializable {
                         RTree globalTree = createGlobalRTree(partitionedMBRList, nbDimension, nbNodePerEntry);
                         collector.collect(globalTree);
                     }
-                });
+        });
 
         return new IndexBuilderResult(partitionedData, globalRTree, localRTree, partitioner);
     }
@@ -298,7 +298,7 @@ public class IndexBuilder implements Serializable {
         Collections.sort(data, new Comparator<PartitionedMBR>() {
             @Override
             public int compare(PartitionedMBR o1, PartitionedMBR o2) {
-                return o1.getMbr().compare(o2.getMbr(), currentDimension);
+                 return o1.getMbr().compare(o2.getMbr(), currentDimension);
             }
         });
         int curTotalLeaf = totalLeaf[currentDimension];

@@ -1,9 +1,10 @@
 package de.tu_berlin.dima;
 
+import de.tu_berlin.dima.datatype.*;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import de.tu_berlin.dima.datatype.*;
 
 /**
  * Created by JML on 3/7/17.

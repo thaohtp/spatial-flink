@@ -25,7 +25,9 @@ import org.springframework.context.{ApplicationContext, ApplicationContextAware}
   classOf[config.fixtures.palindrome],
   classOf[config.fixtures.spatialanalysiss1],
   classOf[config.fixtures.spatialanalysiss5],
-  classOf[config.fixtures.spatialanalysiss10]
+  classOf[config.fixtures.spatialanalysiss10],
+  classOf[config.fixtures.spatialanalysiss1_v0],
+  classOf[config.fixtures.spatialanalysiss1_v1]
 ))
 class experiments extends ApplicationContextAware {
 

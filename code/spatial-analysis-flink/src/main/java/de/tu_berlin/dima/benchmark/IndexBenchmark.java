@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.instrument.Instrumentation;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,7 +38,7 @@ import java.util.Set;
  */
 public class IndexBenchmark {
     public static void main(String[] args) throws Exception {
-        Logger LOG = LoggerFactory.getLogger(IndexBenchmark.class);
+        Logger LOG = LoggerFactory.getLogger(IndexBenchmarkV1.class);
 
         // Benchmark indexing time
         final ParameterTool params = ParameterTool.fromArgs(args);
