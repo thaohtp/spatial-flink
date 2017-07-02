@@ -123,9 +123,5 @@ public class IndexBenchmark {
         System.out.println("---------------- End global tree ---------");
 
         // benchmark index storage over head
-
-        System.out.println("Size of object: " + ObjectSizeCalculator.getObjectSize(localTrees));
-        JobExecutionResult res = env.getLastJobExecutionResult();
-        System.out.println(res.getAllAccumulatorResults());
     }
 }
