@@ -66,7 +66,12 @@ public class IndexBenchmarkV1 {
 
 
         // local rtree size
-        List<RTree> localTrees = result.getLocalRTree().collect();
+        List<Long> localTreeSize = result.getLocalRTree().map(new MapFunction<RTree, Long>() {
+            @Override
+            public Long map(RTree rTree) throws Exception {
+                return rTree.getNumBytes();
+            }
+        }).collect();
         RTree globalTree = result.getGlobalRTree().collect().get(0);
 
         System.out.println("\n---------------- Statistics -------------");
@@ -77,10 +82,10 @@ public class IndexBenchmarkV1 {
 
         System.out.println("\n---------------- Local trees -------------");
         long totalSize = 0;
-        for(int i =0; i< localTrees.size(); i++){
-            RTree tree = localTrees.get(i);
-            System.out.println("Tree size " + tree.getNumBytes());
-            totalSize += tree.getNumBytes();
+        for(int i =0; i< localTreeSize.size(); i++){
+            Long size = localTreeSize.get(i);
+            System.out.println("Tree size " + size);
+            totalSize += size;
         }
         System.out.println("Local trees (total size): " + totalSize);
         System.out.println("---------------- End local trees ---------");
