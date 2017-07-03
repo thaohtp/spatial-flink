@@ -57,7 +57,6 @@ public class IndexBenchmarkV1 {
         IndexBuilderResult result = indexBuilder.buildIndex(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
         Long endTime = System.currentTimeMillis();
 
-
         // local rtree size
         List<Long> localTreeSize = result.getLocalRTree().map(new MapFunction<RTree, Long>() {
             @Override
