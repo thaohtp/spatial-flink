@@ -48,7 +48,8 @@ public class PartitionedMBR implements Serializable{
     }
 
     public int getNumBytes() {
-        return numBytes;
+        return 4 + mbr.getNumBytes();
+//        return numBytes;
     }
 
     public void setNumBytes(int numBytes) {

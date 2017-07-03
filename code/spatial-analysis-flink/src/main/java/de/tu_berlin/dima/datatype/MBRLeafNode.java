@@ -10,4 +10,14 @@ public class MBRLeafNode extends LeafNode<PartitionedMBR> implements Serializabl
         super(nbDimension);
     }
 
+    @Override
+    public long getNumBytes() {
+        this.numBytes =0;
+        for(int i =0; i< entries.size(); i++){
+            this.numBytes += entries.get(i).getNumBytes();
+        }
+        return 1 + mbr.getNumBytes() + 8 + 1 + this.numBytes;
+//        return super.getNumBytes();
+    }
+
 }

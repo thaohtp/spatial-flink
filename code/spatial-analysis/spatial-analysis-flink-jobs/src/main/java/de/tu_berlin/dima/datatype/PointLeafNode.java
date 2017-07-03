@@ -27,4 +27,11 @@ public class PointLeafNode extends LeafNode<Point> implements Serializable{
         return true;
     }
 
+    @Override
+    public long getNumBytes() {
+        this.numBytes = entries.size() * (4 * (nbDimension +1));
+        return 1 + mbr.getNumBytes() + 8 + 1 + this.numBytes;
+//        return super.getNumBytes();
+    }
+
 }

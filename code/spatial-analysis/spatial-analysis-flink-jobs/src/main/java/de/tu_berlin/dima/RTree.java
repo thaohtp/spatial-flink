@@ -128,7 +128,8 @@ public class RTree implements Serializable{
     }
 
     public long getNumBytes() {
-        return numBytes;
+        return rootNode.getNumBytes();
+//        return numBytes;
     }
 
     public void setNumBytes(long numBytes) {

@@ -163,7 +163,8 @@ public class Point implements Key<Point>{
     }
 
     public int getNumbBytes() {
-        return numbBytes;
+        return 4 * (values.size() +1);
+//        return numbBytes;
     }
 
     public void setNumbBytes(int numbBytes) {

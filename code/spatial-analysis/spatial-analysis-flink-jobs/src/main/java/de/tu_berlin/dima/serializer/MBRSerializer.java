@@ -26,7 +26,7 @@ public class MBRSerializer extends Serializer<MBR> {
         MBR mbr = new MBR(maxPoint, minPoint);
         mbr.setInitialized(input.readBoolean());
         mbr.setNbDimension(input.readInt());
-        mbr.setNumBytes(maxPoint.getNumbBytes() + minPoint.getNumbBytes() + 1 + 4);
+//        mbr.setNumBytes(maxPoint.getNumbBytes() + minPoint.getNumbBytes() + 1 + 4);
         return mbr;
     }
 }

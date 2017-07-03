@@ -23,16 +23,17 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
   // ---------------------------------------------------
   // default-mac
   // ---------------------------------------------------
-  val parallel = 4
-  val nbNodePerEntry = 40
-  val input = "/jml/data/test/spatial_analysis_flink/input/reduced_20170507.csv"
-  val output = "/jml/data/test/spatial_analysis_flink/input/dummy_test"
+//  val parallel = " -p 4"
+//  val nbNodePerEntry = 40
+//  val input = "/jml/data/test/spatial_analysis_flink/input/reduced_20170507.csv"
+//  val output = "/jml/data/test/spatial_analysis_flink/input/dummy_test"
 
   // ---------------------------------------------------
   // ubuntu
   // ---------------------------------------------------
 
   //  val parallel = 1
+  //  val parallel = " -p 1"
   //  val nbNodePerEntry = 40;
   //  val input = "/jml/data/test/spatial_analysis_flink/input/reduced_20170507.csv";
   //  val output = "/home/parallels/mac/data/output/";
@@ -42,10 +43,10 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
   // ibm-power-1
   // ---------------------------------------------------
 
-  //  val parallel = 288
-  //  val nbNodePerEntry = 40;
-  //  val input = "/home/hadoop/thaohtp/data/input/gdelt6gb/";
-  //  val output = "/home/hadoop/thaohtp/data/output/dummy-test";
+    val parallel = " -p 200"
+    val nbNodePerEntry = 100;
+    val input = "/home/hadoop/thaohtp/data/input/gdelt6gb/";
+    val output = "/home/hadoop/thaohtp/data/output/dummy-test";
 
 
   /* The enclosing application context. */
@@ -65,7 +66,7 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
     val `sa.size1.r01` = new FlinkExperiment(
       name = s"sa.size1.r01.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+        (""" -v -c de.tu_berlin.dima.""" + className + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.1 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
@@ -80,7 +81,7 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
     val `sa.size1.r02` = new FlinkExperiment(
       name = s"sa.size1.r02.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+        (""" -v -c de.tu_berlin.dima.""" + className + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.2 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
@@ -95,7 +96,7 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
     val `sa.size1.r03` = new FlinkExperiment(
       name = s"sa.size1.r03.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+        (""" -v -c de.tu_berlin.dima.""" + className + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.3 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
@@ -111,7 +112,7 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
     val `sa.size1.r04` = new FlinkExperiment(
       name = s"sa.size1.r04.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+        (""" -v -c de.tu_berlin.dima.""" + className + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.4 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
@@ -127,7 +128,7 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
     val `sa.size1.r05` = new FlinkExperiment(
       name = s"sa.size1.r05.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+        (""" -v -c de.tu_berlin.dima.""" + className + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.5 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
@@ -142,7 +143,7 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
     val `sa.size1.r06` = new FlinkExperiment(
       name = s"sa.size1.r06.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+        (""" -v -c de.tu_berlin.dima.""" + className + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.6 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
@@ -158,7 +159,7 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
     val `sa.size1.r07` = new FlinkExperiment(
       name = s"sa.size1.r07.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+        (""" -v -c de.tu_berlin.dima.""" + className + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.7 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
@@ -173,7 +174,7 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
     val `sa.size1.r08` = new FlinkExperiment(
       name = s"sa.size1.r08.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+        (""" -v -c de.tu_berlin.dima.""" + className + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.8 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
@@ -188,7 +189,7 @@ class spatialanalysiss1_v0 extends ApplicationContextAware {
     val `sa.size1.r09` = new FlinkExperiment(
       name = s"sa.size1.r09.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+        (""" -v -c de.tu_berlin.dima.""" + className + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.9 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,

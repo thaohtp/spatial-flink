@@ -6,6 +6,7 @@ import de.tu_berlin.dima.datatype.Point;
 import de.tu_berlin.dima.test.IndexBuilderResult;
 import de.tu_berlin.dima.util.Utils;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -13,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * Benchmark index building time
@@ -36,6 +36,7 @@ public class IndexBenchmarkV0 {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         // make params available on web interface
         env.getConfig().setGlobalJobParameters(params);
+        Utils.registerTypeWithKryoSerializer(env);
         Utils.registerCustomSerializer(env);
 
         DataSet<Point> data = env.readTextFile(input)
@@ -57,16 +58,27 @@ public class IndexBenchmarkV0 {
         IndexBuilderResult result = indexBuilder.buildIndex(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
         Long endTime = System.currentTimeMillis();
 
-
-        // local rtree size
-        List<RTree> localTrees = result.getLocalRTree().collect();
         RTree globalTree = result.getGlobalRTree().collect().get(0);
+        System.out.println("\n---------------- Local trees -------------");
+        result.getLocalRTree().map(new RichMapFunction<RTree, String>() {
+            @Override
+            public String map(RTree rTree) throws Exception {
+                return "Local tree: " + rTree.getRootNode().getSize() + "," + rTree.getRootNode().getMbr();
+            }
+        }).print();
+        System.out.println("---------------- End local trees -------------");
 
         System.out.println("\n---------------- Statistics -------------");
         System.out.println("Start building index: " + startTime + " - " + new Date());
         System.out.println("End building index: " + endTime + " - " + new Date());
         System.out.println("Total time of building index: " +(endTime - startTime) + " ms");
         System.out.println("---------------- End statistics -------------");
+
+        System.out.println("\n---------------- Global tree -------------");
+        System.out.println(globalTree.getRootNode().getSize() + "," + globalTree.getRootNode().getMbr());
+        System.out.println(globalTree.toString());
+        System.out.println("---------------- End global tree ---------");
+
     }
 
 }

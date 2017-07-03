@@ -198,7 +198,8 @@ public class MBR implements Serializable{
     }
 
     public int getNumBytes() {
-        return numBytes;
+        return maxPoint.getNumbBytes() + minPoint.getNumbBytes() + 1 + 4;
+//        return numBytes;
     }
 
     public void setNumBytes(int numBytes) {

@@ -60,4 +60,13 @@ public class NonLeafNode extends RTreeNode implements Serializable{
         this.size = size;
     }
 
+    @Override
+    public long getNumBytes() {
+        this.numBytes = 0;
+        for(int i =0; i< childNodes.size(); i++){
+            this.numBytes += childNodes.get(i).getNumBytes();
+        }
+        return 1 + mbr.getNumBytes() + 8 + this.numBytes;
+//        return super.getNumBytes();
+    }
 }

@@ -22,7 +22,7 @@ public class PartitionedMBRSerializer extends Serializer<PartitionedMBR> {
         MBR mbr = kryo.readObject(input, MBR.class);
         int partitionNumber = input.readInt();
         PartitionedMBR partitionedMBR = new PartitionedMBR(mbr, partitionNumber);
-        partitionedMBR.setNumBytes(4 + mbr.getNumBytes());
+//        partitionedMBR.setNumBytes(4 + mbr.getNumBytes());
         return partitionedMBR;
     }
 }

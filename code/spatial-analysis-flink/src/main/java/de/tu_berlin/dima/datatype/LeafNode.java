@@ -55,5 +55,4 @@ public abstract class LeafNode<T> extends RTreeNode implements Serializable{
     public void setEntries(List<T> entries) {
         this.entries = entries;
     }
-
 }

@@ -27,7 +27,7 @@ public class PointSerializer extends Serializer<Point>{
             vals[i] = input.readFloat();
         }
         Point p = new Point(vals);
-        p.setNumbBytes( 4 * (numDimension +1));
+//        p.setNumbBytes( 4 * (numDimension +1));
         return p;
     }
 }

@@ -20,7 +20,7 @@ public class RTreeSerializer extends Serializer<RTree>{
     public RTree read(Kryo kryo, Input input, Class<RTree> type) {
         NonLeafNode root = kryo.readObject(input, NonLeafNode.class);
         RTree tree = new RTree(root);
-        tree.setNumBytes(root.getNumBytes());
+//        tree.setNumBytes(root.getNumBytes());
         return tree;
     }
 }

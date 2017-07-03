@@ -71,7 +71,7 @@ public class RTreeNodeSerializer extends Serializer<RTreeNode> {
             }
             node = new NonLeafNode(numDimension, mbr, childNodes);
 
-            node.setNumBytes(numBytes);
+//            node.setNumBytes(numBytes);
             return node;
         }
         else{
@@ -113,7 +113,7 @@ public class RTreeNodeSerializer extends Serializer<RTreeNode> {
             node.setNbDimension(numDimension);
             node.setMbr(mbr);
 
-            node.setNumBytes(numBytes);
+//            node.setNumBytes(numBytes);
             return node;
         }
     }
