@@ -12,6 +12,8 @@ public class PartitionedMBR implements Serializable{
 
     private int partitionNumber;
 
+    private int numBytes;
+
     public PartitionedMBR(MBR mbr, Integer partitionNumber){
         this.mbr = mbr;
         this.partitionNumber = partitionNumber;
@@ -45,4 +47,11 @@ public class PartitionedMBR implements Serializable{
         this.size = size;
     }
 
+    public int getNumBytes() {
+        return numBytes;
+    }
+
+    public void setNumBytes(int numBytes) {
+        this.numBytes = numBytes;
+    }
 }

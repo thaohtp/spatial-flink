@@ -5,7 +5,6 @@ import org.apache.flink.core.memory.DataOutputView;
 import org.apache.flink.types.Key;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +12,8 @@ import java.util.List;
  * Created by JML on 3/7/17.
  */
 public class Point implements Key<Point>{
+    private int numbBytes = 0;
+
     private List<Float> values;
 
     public Point(){
@@ -146,6 +147,7 @@ public class Point implements Key<Point>{
 
     @Override
     public void write(DataOutputView dataOutputView) throws IOException {
+        dataOutputView.writeInt(this.values.size());
         for(int i = 0; i< this.values.size(); i++){
             dataOutputView.writeFloat(this.values.get(i));
         }
@@ -153,25 +155,19 @@ public class Point implements Key<Point>{
 
     @Override
     public void read(DataInputView dataInputView) throws IOException {
-        Float value = dataInputView.readFloat();
-//        do{
-//            value  = dataInputView.readFloat();
-//            if(value != null){
-//                this.values.add(value);
-//            }
-//        } while (value!= null);
+        int numDimension = dataInputView.readInt();
+        this.values = new ArrayList<Float>(numDimension);
+        for(int i = 0; i<numDimension; i++){
+            this.values.add(dataInputView.readFloat());
+        }
+    }
 
-//        value  = dataInputView.readFloat();
-//        if(value != null){
-//            this.values.add(value);
-//        }
-//        while(value != null){
-//            this.values.add(value);
-//            value = dataInputView.readFloat();
-//        }
-        this.values.add(value);
-        value = dataInputView.readFloat();
-        this.values.add(value);
+    public int getNumbBytes() {
+        return numbBytes;
+    }
+
+    public void setNumbBytes(int numbBytes) {
+        this.numbBytes = numbBytes;
     }
 
     public List<Float> getValues() {

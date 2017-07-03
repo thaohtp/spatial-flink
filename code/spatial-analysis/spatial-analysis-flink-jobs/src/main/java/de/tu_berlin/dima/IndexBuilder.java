@@ -74,7 +74,7 @@ public class IndexBuilder implements Serializable {
         });
 
         // Step 2: build local RTree
-        DataSet<RTree> localRTree = partitionedData.mapPartition(new MapPartitionFunction<Point, RTree>() {
+        DataSet<RTree> localRTree = partitionedData.mapPartition(new RichMapPartitionFunction<Point, RTree>() {
             @Override
             public void mapPartition(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
                 List<Point> points = new ArrayList<Point>();
@@ -91,28 +91,32 @@ public class IndexBuilder implements Serializable {
         });
 
         // Step 3: build global RTree
-        DataSet<RTree> globalRTree = localRTree.reduceGroup(new RichGroupReduceFunction<RTree, RTree>() {
+        DataSet<RTree> globalRTree = localRTree
+                .map(new RichMapFunction<RTree, Tuple2<Integer, RTree>>() {
+                    @Override
+                    public Tuple2<Integer, RTree> map(RTree rTree) throws Exception {
+                        return new Tuple2<Integer, RTree>(getRuntimeContext().getIndexOfThisSubtask(), rTree);
+                    }
+                })
+                .reduceGroup(new RichGroupReduceFunction<Tuple2<Integer, RTree>, RTree>() {
+                    @Override
+                    public void reduce(Iterable<Tuple2<Integer, RTree>> iterable, Collector<RTree> collector) throws Exception {
+                        Iterator<Tuple2<Integer, RTree>> iter = iterable.iterator();
+                        List<PartitionedMBR> partitionedMBRList = new ArrayList<PartitionedMBR>();
+                        while (iter.hasNext()) {
+                            Tuple2<Integer, RTree> tuple = iter.next();
+                            RTree rtree = tuple.f1;
+                            PartitionedMBR point = new PartitionedMBR(rtree.getRootNode().getMbr(), tuple.f0);
+                            point.setSize(rtree.getRootNode().getSize());
+                            partitionedMBRList.add(point);
+                        }
 
-            @Override
-            public void reduce(Iterable<RTree> iterable, Collector<RTree> collector) throws Exception {
-                Iterator<RTree> rtreeIter = iterable.iterator();
-                int i = 0;
-                List<PartitionedMBR> partitionedMBRList = new ArrayList<PartitionedMBR>();
-                while (rtreeIter.hasNext()) {
-                    i++;
-                    RTree rtree = rtreeIter.next();
-                    PartitionedMBR point = new PartitionedMBR(rtree.getRootNode().getMbr(), i);
-                    point.setSize(rtree.getRootNode().getSize());
-                    partitionedMBRList.add(point);
-                }
-
-                RTree globalTree = createGlobalRTree(partitionedMBRList, nbDimension, nbNodePerEntry);
-                collector.collect(globalTree);
-            }
+                        RTree globalTree = createGlobalRTree(partitionedMBRList, nbDimension, nbNodePerEntry);
+                        collector.collect(globalTree);
+                    }
         });
 
-        IndexBuilderResult result = new IndexBuilderResult(partitionedData, globalRTree.collect().get(0), localRTree, partitioner);
-        return result;
+        return new IndexBuilderResult(partitionedData, globalRTree, localRTree, partitioner);
     }
 
 
@@ -513,14 +517,10 @@ public class IndexBuilder implements Serializable {
         boolean withReplacement = false;
         STRPartitioner partitioner = createSTRPartitioner(data, nbDimension, nbNodePerEntry, sampleRate, parallelism);
 
-        System.out.println("Before partitioning");
         List<RTreeNode> leafNodes = partitioner.getrTree().getLeafNodes();
         for (RTreeNode node : leafNodes) {
             MBRLeafNode leaf = (MBRLeafNode) node;
             List<PartitionedMBR> entries = leaf.getEntries();
-            for (PartitionedMBR mbr : entries) {
-                System.out.println(mbr.getMbr().toString());
-            }
         }
 
         // Partition data
@@ -532,7 +532,7 @@ public class IndexBuilder implements Serializable {
         });
 
         // Step 2: build local RTree
-        DataSet<RTree> localRTree = partitionedData.mapPartition(new MapPartitionFunction<Point, RTree>() {
+        DataSet<RTree> localRTree = partitionedData.mapPartition(new RichMapPartitionFunction<Point, RTree>() {
             @Override
             public void mapPartition(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
                 List<Point> points = new ArrayList<Point>();
@@ -549,32 +549,31 @@ public class IndexBuilder implements Serializable {
         });
 
         // Step 3: build global RTree
-        DataSet<RTree> globalRTree = localRTree.reduceGroup(new GroupReduceFunction<RTree, RTree>() {
-            @Override
-            public void reduce(Iterable<RTree> iterable, Collector<RTree> collector) throws Exception {
-                Iterator<RTree> rtreeIter = iterable.iterator();
-                int i = 0;
-                List<PartitionedMBR> partitionedMBRList = new ArrayList<PartitionedMBR>();
-                while (rtreeIter.hasNext()) {
-                    i++;
-                    RTree rtree = rtreeIter.next();
-                    PartitionedMBR point = new PartitionedMBR(rtree.getRootNode().getMbr(), i);
-                    partitionedMBRList.add(point);
-                }
+        DataSet<RTree> globalRTree = localRTree
+                .map(new RichMapFunction<RTree, Tuple2<Integer, RTree>>() {
+                    @Override
+                    public Tuple2<Integer, RTree> map(RTree rTree) throws Exception {
+                        return new Tuple2<Integer, RTree>(getRuntimeContext().getIndexOfThisSubtask(), rTree);
+                    }
+                })
+                .reduceGroup(new RichGroupReduceFunction<Tuple2<Integer, RTree>, RTree>() {
+                    @Override
+                    public void reduce(Iterable<Tuple2<Integer, RTree>> iterable, Collector<RTree> collector) throws Exception {
+                        Iterator<Tuple2<Integer, RTree>> iter = iterable.iterator();
+                        List<PartitionedMBR> partitionedMBRList = new ArrayList<PartitionedMBR>();
+                        while (iter.hasNext()) {
+                            Tuple2<Integer, RTree> tuple = iter.next();
+                            RTree rtree = tuple.f1;
+                            PartitionedMBR point = new PartitionedMBR(rtree.getRootNode().getMbr(), tuple.f0);
+                            point.setSize(rtree.getRootNode().getSize());
+                            partitionedMBRList.add(point);
+                        }
 
-                RTree globalTree = createGlobalRTree(partitionedMBRList, nbDimension, nbNodePerEntry);
-                collector.collect(globalTree);
-            }
-        });
-
-//        DataSet<RTree> globalRTree = localRTree.reduceGroup(new GlobalTreeGroupReducedFunc(nbDimension, nbNodePerEntry));
-
-
-        globalRTree.print();
-        localRTree.print();
-
-        IndexBuilderResult result = new IndexBuilderResult(partitionedData, globalRTree.collect().get(0), localRTree, partitioner);
-        return result;
+                        RTree globalTree = createGlobalRTree(partitionedMBRList, nbDimension, nbNodePerEntry);
+                        collector.collect(globalTree);
+                    }
+                });
+        return new IndexBuilderResult(partitionedData, globalRTree, localRTree, partitioner);
     }
 
 

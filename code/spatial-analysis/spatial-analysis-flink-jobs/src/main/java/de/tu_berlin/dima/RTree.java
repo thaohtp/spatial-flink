@@ -1,8 +1,6 @@
 package de.tu_berlin.dima;
 
-import de.tu_berlin.dima.datatype.RTreeNode;
-import de.tu_berlin.dima.datatype.Point;
-import de.tu_berlin.dima.datatype.RTreeNode;
+import de.tu_berlin.dima.datatype.*;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,6 +12,8 @@ import java.util.List;
 public class RTree implements Serializable{
 
     private RTreeNode rootNode;
+
+    private long numBytes;
 
     public RTree(RTreeNode rootNode){
         this.rootNode = rootNode;
@@ -61,13 +61,15 @@ public class RTree implements Serializable{
 
     }
 
-
     public List<RTreeNode> search(Point point){
-        List<RTreeNode> result = this.searchNodes(rootNode, point);
-        return result;
+        return this.searchByPoint(rootNode, point);
     }
 
-    private List<RTreeNode> searchNodes(RTreeNode node, Point point){
+    public List<PartitionedMBR> search(MBR mbr){
+        return this.searchByRectangle(rootNode, mbr);
+    }
+
+    private List<RTreeNode> searchByPoint(RTreeNode node, Point point){
         List<RTreeNode> result = new ArrayList<RTreeNode>();
         if(node.getMbr().contains(point)){
             if(node.isLeaf()){
@@ -77,7 +79,29 @@ public class RTree implements Serializable{
             else{
                 List<RTreeNode> childNodes = node.getChildNodes();
                 for(int i =0; i<childNodes.size(); i++){
-                    result.addAll(searchNodes(childNodes.get(i), point));
+                    result.addAll(searchByPoint(childNodes.get(i), point));
+                }
+            }
+        }
+        return result;
+    }
+
+    private List<PartitionedMBR> searchByRectangle(RTreeNode node, MBR box){
+        List<PartitionedMBR> result = new ArrayList<PartitionedMBR>();
+        if(node.getMbr().intersects(box)){
+            if(node.isLeaf()){
+                List<PartitionedMBR> entries = ((MBRLeafNode) node).getEntries();
+                for (PartitionedMBR entry: entries) {
+                    if(entry.getMbr().intersects(box)){
+                        result.add(entry);
+                    }
+                }
+                return result;
+            }
+            else{
+                List<RTreeNode> childNodes = node.getChildNodes();
+                for(int i =0; i<childNodes.size(); i++){
+                    result.addAll(searchByRectangle(childNodes.get(i), box));
                 }
             }
         }
@@ -101,5 +125,13 @@ public class RTree implements Serializable{
             }
         }
         return result;
+    }
+
+    public long getNumBytes() {
+        return numBytes;
+    }
+
+    public void setNumBytes(long numBytes) {
+        this.numBytes = numBytes;
     }
 }

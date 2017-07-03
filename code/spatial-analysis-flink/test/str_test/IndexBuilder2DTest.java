@@ -3,20 +3,28 @@ package str_test;
 import de.tu_berlin.dima.IndexBuilder;
 import de.tu_berlin.dima.RTree;
 import de.tu_berlin.dima.STRPartitioner;
-import de.tu_berlin.dima.datatype.Point;
-import de.tu_berlin.dima.datatype.RTreeNode;
+import de.tu_berlin.dima.datatype.*;
+import de.tu_berlin.dima.serializer.*;
 import de.tu_berlin.dima.test.IndexBuilderResult;
+import de.tu_berlin.dima.util.Utils;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.MapPartitionFunction;
+import org.apache.flink.api.common.functions.RichMapPartitionFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.util.Collector;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runners.Suite;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * Created by JML on 5/19/17.
  */
+@Suite.SuiteClasses(IndexBuilder2DTest.class)
 public class IndexBuilder2DTest {
     private static final int POINTS_PER_NODE = 3;
     private static final int NB_DIMENSION = 2;
@@ -53,6 +61,7 @@ public class IndexBuilder2DTest {
         samplePoints = points.subList(0, points.size()/2);
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        Utils.registerCustomSerializer(env);
         int parallelism = env.getParallelism();
         double sampleRate = 0.8;
 
@@ -62,10 +71,98 @@ public class IndexBuilder2DTest {
         IndexBuilderResult result = indexBuilder.buildIndexTestVersion(pointDS, pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
 //        indexBuilder.buildIndex(pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
 
-        System.out.println("Global tree: " + result.getGlobalRTree().toString());
+        RTree globalTree = result.getGlobalRTree().collect().get(0);
+        System.out.println("Global tree: " + globalTree.toString());
+        System.out.println("Local tree: ");
+
+        // Size of
+        // Points: 12
+        // MBR: 29
+        // PartitionedMBR: 33
+        // LeafNode: 39 + sizeOfEntries (Points or PartitionedMBR)
+        // NonLeafNode: 38 + sizeOfChildNodes (LeafNode or NonLeafNode)
+
+//        < (1.0,0.0)(1.0,2.0)(2.0,2.0) ,  > => 113B
+//        < (-1.0,5.0)(3.0,9.0) ,  > => 101B
+//        < (10.0,4.0) ,  > => 89B
+//        < (11.0,10.0) ,  > => 89B
+        // GlobalTree => 232B
+        List<RTree> localTrees = result.getLocalRTree().collect();
+        for(int i = 0; i<localTrees.size(); i++){
+            RTree tree = localTrees.get(i);
+            String treeString = tree.toString();
+            System.out.print(treeString);
+            LeafNode leaf = (LeafNode) tree.getLeafNodes().get(0);
+            if(leaf.getEntries().size() == 3){
+                Assert.assertEquals("Wrong memory size of < (1.0,0.0)(1.0,2.0)(2.0,2.0) ,  >", 113, tree.getNumBytes());
+            }
+            else{
+                if(leaf.getEntries().size() == 2){
+                    Assert.assertEquals("Wrong memory size of < (-1.0,5.0)(3.0,9.0) ,  >", 101, tree.getNumBytes());
+                }
+                else{
+                    Assert.assertEquals("Wrong memory size of " + treeString, 89, tree.getNumBytes());
+                }
+            }
+            System.out.println("Size: " + localTrees.get(i).getNumBytes());
+        }
+        Assert.assertEquals("Wrong memory size of global tree: ", 248, globalTree.getNumBytes());
+    }
+
+    @Test
+    public void testPartition() throws Exception{
+        prepareData();
+        samplePoints = points.subList(0, points.size()/2);
+
+        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        env.registerTypeWithKryoSerializer(Point.class, PointSerializer.class);
+        env.registerTypeWithKryoSerializer(MBR.class, MBRSerializer.class);
+        env.registerTypeWithKryoSerializer(PartitionedMBR.class, PartitionedMBRSerializer.class);
+        env.registerTypeWithKryoSerializer(LeafNode.class, RTreeNodeSerializer.class);
+        env.registerTypeWithKryoSerializer(PointLeafNode.class, RTreeNodeSerializer.class);
+        env.registerTypeWithKryoSerializer(MBRLeafNode.class, RTreeNodeSerializer.class);
+        env.registerTypeWithKryoSerializer(NonLeafNode.class, RTreeNodeSerializer.class);
+        env.registerTypeWithKryoSerializer(RTreeNode.class, RTreeNodeSerializer.class);
+        env.registerTypeWithKryoSerializer(RTree.class, RTreeSerializer.class);
+
+        int parallelism = env.getParallelism();
+        double sampleRate = 0.8;
+
+        DataSet<Point> pointDS = env.fromCollection(points);
+        DataSet<Point> samplePointDS = env.fromCollection(samplePoints);
+        pointDS.mapPartition(new MapPartitionFunction<Point, String>() {
+            @Override
+            public void mapPartition(Iterable<Point> iterable, Collector<String> collector) throws Exception {
+                Iterator<Point> pointIter = iterable.iterator();
+                String result = "beforePartition ";
+                while(pointIter.hasNext()){
+                    result = result + pointIter.next().toString();
+                }
+                collector.collect(result);
+
+            }
+        }).print();
+
+        IndexBuilderResult result = indexBuilder.buildIndexTestVersion(pointDS, pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
+//        indexBuilder.buildIndex(pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
+
+        result.getData().mapPartition(new MapPartitionFunction<Point, String>() {
+            @Override
+            public void mapPartition(Iterable<Point> iterable, Collector<String> collector) throws Exception {
+                Iterator<Point> pointIter = iterable.iterator();
+                String result = "partitionedData ";
+                while(pointIter.hasNext()){
+                    result = result + pointIter.next().toString();
+                }
+                collector.collect(result);
+            }
+        }).print();
+
+        RTree globalTree = result.getGlobalRTree().collect().get(0);
+        System.out.println("Global tree: " + globalTree.toString());
         System.out.println("Local tree: ");
         result.getLocalRTree().print();
-        System.out.println(result.getLocalRTree().count());
+        System.out.println("Total memory: " + globalTree.getNumBytes());
     }
 
     @Test

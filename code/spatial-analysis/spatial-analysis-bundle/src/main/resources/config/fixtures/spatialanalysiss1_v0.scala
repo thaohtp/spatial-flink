@@ -1,31 +1,32 @@
 package config.fixtures
 
 import com.typesafe.config.ConfigFactory
-import org.peelframework.core.beans.data.{DataSet, ExperimentOutput}
+import org.peelframework.core.beans.data.{CopiedDataSet, DataSet, ExperimentOutput}
 import org.peelframework.core.beans.experiment.ExperimentSuite
 import org.peelframework.dstat.beans.system.Dstat
 import org.peelframework.flink.beans.experiment.FlinkExperiment
 import org.peelframework.flink.beans.system.Flink
+import org.peelframework.hadoop.beans.system.HDFS2
 import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.context.{ApplicationContext, ApplicationContextAware}
 
 /** `Spatial analysis` experiment fixtures for the 'spatial-analysis' bundle. */
 @Configuration
-class spatialanalysiss10 extends ApplicationContextAware {
+class spatialanalysiss1_v0 extends ApplicationContextAware {
 
-  val size = 10;
-  val runs = 1;
-  val nbDimension = 2;
-  val jarVersion = "1.0";
-  val className = "benchmark.IndexBenchmark";
+  val size = 1
+  val runs = 3
+  val nbDimension = 2
+  val jarVersion = "1.0"
+  val className = "benchmark.IndexBenchmarkV0"
 
   // ---------------------------------------------------
   // default-mac
   // ---------------------------------------------------
-  val parallel = 4;
-  val nbNodePerEntry = 40;
-  val input = "/jml/data/test/spatial_analysis_flink/input/reduced_20170507.csv";
-  val output = "/jml/data/test/spatial_analysis_flink/input/dummy_test";
+  val parallel = 4
+  val nbNodePerEntry = 40
+  val input = "/jml/data/test/spatial_analysis_flink/input/reduced_20170507.csv"
+  val output = "/jml/data/test/spatial_analysis_flink/input/dummy_test"
 
   // ---------------------------------------------------
   // ubuntu
@@ -59,10 +60,10 @@ class spatialanalysiss10 extends ApplicationContextAware {
   // Experiments
   // ---------------------------------------------------
 
-  @Bean(name = Array("sa.size10"))
-  def `sa.size10`: ExperimentSuite = {
-    val `sa.size10.r01` = new FlinkExperiment(
-      name = s"sa.size10.r01.node" + nbNodePerEntry,
+  @Bean(name = Array("sa.size1_v0"))
+  def `sa.size1_v0`: ExperimentSuite = {
+    val `sa.size1.r01` = new FlinkExperiment(
+      name = s"sa.size1.r01.node" + nbNodePerEntry,
       command =
         (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
@@ -76,8 +77,8 @@ class spatialanalysiss10 extends ApplicationContextAware {
       outputs = Set.empty[ExperimentOutput]
     )
 
-    val `sa.size10.r02` = new FlinkExperiment(
-      name = s"sa.size10.r02.node" + nbNodePerEntry,
+    val `sa.size1.r02` = new FlinkExperiment(
+      name = s"sa.size1.r02.node" + nbNodePerEntry,
       command =
         (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
@@ -91,8 +92,8 @@ class spatialanalysiss10 extends ApplicationContextAware {
       outputs = Set.empty[ExperimentOutput]
     )
 
-    val `sa.size10.r03` = new FlinkExperiment(
-      name = s"sa.size10.r03.node" + nbNodePerEntry,
+    val `sa.size1.r03` = new FlinkExperiment(
+      name = s"sa.size1.r03.node" + nbNodePerEntry,
       command =
         (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
@@ -107,8 +108,8 @@ class spatialanalysiss10 extends ApplicationContextAware {
     )
 
 
-    val `sa.size10.r04` = new FlinkExperiment(
-      name = s"sa.size10.r04.node" + nbNodePerEntry,
+    val `sa.size1.r04` = new FlinkExperiment(
+      name = s"sa.size1.r04.node" + nbNodePerEntry,
       command =
         (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
@@ -123,8 +124,8 @@ class spatialanalysiss10 extends ApplicationContextAware {
     )
 
 
-    val `sa.size10.r05` = new FlinkExperiment(
-      name = s"sa.size10.r05.node" + nbNodePerEntry,
+    val `sa.size1.r05` = new FlinkExperiment(
+      name = s"sa.size1.r05.node" + nbNodePerEntry,
       command =
         (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
@@ -138,8 +139,8 @@ class spatialanalysiss10 extends ApplicationContextAware {
       outputs = Set.empty[ExperimentOutput]
     )
 
-    val `sa.size10.r06` = new FlinkExperiment(
-      name = s"sa.size10.r06.node" + nbNodePerEntry,
+    val `sa.size1.r06` = new FlinkExperiment(
+      name = s"sa.size1.r06.node" + nbNodePerEntry,
       command =
         (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
@@ -154,8 +155,8 @@ class spatialanalysiss10 extends ApplicationContextAware {
     )
 
 
-    val `sa.size10.r07` = new FlinkExperiment(
-      name = s"sa.size10.r07.node" + nbNodePerEntry,
+    val `sa.size1.r07` = new FlinkExperiment(
+      name = s"sa.size1.r07.node" + nbNodePerEntry,
       command =
         (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
@@ -169,8 +170,8 @@ class spatialanalysiss10 extends ApplicationContextAware {
       outputs = Set.empty[ExperimentOutput]
     )
 
-    val `sa.size10.r08` = new FlinkExperiment(
-      name = s"sa.size10.r08.node" + nbNodePerEntry,
+    val `sa.size1.r08` = new FlinkExperiment(
+      name = s"sa.size1.r08.node" + nbNodePerEntry,
       command =
         (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
@@ -184,8 +185,8 @@ class spatialanalysiss10 extends ApplicationContextAware {
       outputs = Set.empty[ExperimentOutput]
     )
 
-    val `sa.size10.r09` = new FlinkExperiment(
-      name = s"sa.size10.r09.node" + nbNodePerEntry,
+    val `sa.size1.r09` = new FlinkExperiment(
+      name = s"sa.size1.r09.node" + nbNodePerEntry,
       command =
         (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
           " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
@@ -200,15 +201,16 @@ class spatialanalysiss10 extends ApplicationContextAware {
     )
 
     new ExperimentSuite(Seq(
-      `sa.size10.r01`,
-      `sa.size10.r02`,
-      `sa.size10.r03`,
-      `sa.size10.r04`,
-      `sa.size10.r05`,
-      `sa.size10.r06`,
-      `sa.size10.r07`,
-      `sa.size10.r08`,
-      `sa.size10.r09`))
+      `sa.size1.r01`,
+      `sa.size1.r02`,
+      `sa.size1.r03`,
+      `sa.size1.r04`,
+      `sa.size1.r05`,
+      `sa.size1.r06`,
+      `sa.size1.r07`,
+      `sa.size1.r08`,
+      `sa.size1.r09`))
   }
+
 
 }

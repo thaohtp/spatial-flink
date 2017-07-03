@@ -13,15 +13,38 @@ import org.springframework.context.{ApplicationContext, ApplicationContextAware}
 @Configuration
 class spatialanalysiss5 extends ApplicationContextAware {
 
-  val runs = 1
-
-  val parallel = 1;
   val size = 5;
+  val runs = 1;
+  val nbDimension = 2;
+  val jarVersion = "1.0";
+  val className = "benchmark.IndexBenchmark";
+
+  // ---------------------------------------------------
+  // default-mac
+  // ---------------------------------------------------
+  val parallel = 4;
   val nbNodePerEntry = 40;
   val input = "/jml/data/test/spatial_analysis_flink/input/reduced_20170507.csv";
-//  val output = "/jml/data/test/spatial_analysis_flink/input/dummy_test";
-  val output = "/home/parallels/mac/data/output/";
-  val nbDimension = 2;
+  val output = "/jml/data/test/spatial_analysis_flink/input/dummy_test";
+
+  // ---------------------------------------------------
+  // ubuntu
+  // ---------------------------------------------------
+
+  //  val parallel = 1
+  //  val nbNodePerEntry = 40;
+  //  val input = "/jml/data/test/spatial_analysis_flink/input/reduced_20170507.csv";
+  //  val output = "/home/parallels/mac/data/output/";
+
+
+  // ---------------------------------------------------
+  // ibm-power-1
+  // ---------------------------------------------------
+
+  //  val parallel = 288
+  //  val nbNodePerEntry = 40;
+  //  val input = "/home/hadoop/thaohtp/data/input/gdelt6gb/";
+  //  val output = "/home/hadoop/thaohtp/data/output/dummy-test";
 
 
   /* The enclosing application context. */
@@ -38,12 +61,11 @@ class spatialanalysiss5 extends ApplicationContextAware {
 
   @Bean(name = Array("sa.size5"))
   def `sa.size5`: ExperimentSuite = {
-
     val `sa.size5.r01` = new FlinkExperiment(
       name = s"sa.size5.r01.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.benchmark.IndexBenchmark -p """ + parallel +
-          " ${app.path.apps}/spatial-analysis-flink-jobs-1.0-SNAPSHOT.jar " +
+        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+          " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.1 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
       config = ConfigFactory.parseString(""),
@@ -57,8 +79,8 @@ class spatialanalysiss5 extends ApplicationContextAware {
     val `sa.size5.r02` = new FlinkExperiment(
       name = s"sa.size5.r02.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.benchmark.IndexBenchmark -p """ + parallel +
-          " ${app.path.apps}/spatial-analysis-flink-jobs-1.0-SNAPSHOT.jar " +
+        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+          " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.2 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
       config = ConfigFactory.parseString(""),
@@ -72,8 +94,8 @@ class spatialanalysiss5 extends ApplicationContextAware {
     val `sa.size5.r03` = new FlinkExperiment(
       name = s"sa.size5.r03.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.benchmark.IndexBenchmark -p """ + parallel +
-          " ${app.path.apps}/spatial-analysis-flink-jobs-1.0-SNAPSHOT.jar " +
+        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+          " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.3 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
       config = ConfigFactory.parseString(""),
@@ -88,8 +110,8 @@ class spatialanalysiss5 extends ApplicationContextAware {
     val `sa.size5.r04` = new FlinkExperiment(
       name = s"sa.size5.r04.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.benchmark.IndexBenchmark -p """ + parallel +
-          " ${app.path.apps}/spatial-analysis-flink-jobs-1.0-SNAPSHOT.jar " +
+        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+          " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.4 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
       config = ConfigFactory.parseString(""),
@@ -104,8 +126,8 @@ class spatialanalysiss5 extends ApplicationContextAware {
     val `sa.size5.r05` = new FlinkExperiment(
       name = s"sa.size5.r05.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.benchmark.IndexBenchmark -p """ + parallel +
-          " ${app.path.apps}/spatial-analysis-flink-jobs-1.0-SNAPSHOT.jar " +
+        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+          " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.5 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
       config = ConfigFactory.parseString(""),
@@ -119,8 +141,8 @@ class spatialanalysiss5 extends ApplicationContextAware {
     val `sa.size5.r06` = new FlinkExperiment(
       name = s"sa.size5.r06.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.benchmark.IndexBenchmark -p """ + parallel +
-          " ${app.path.apps}/spatial-analysis-flink-jobs-1.0-SNAPSHOT.jar " +
+        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+          " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.6 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
       config = ConfigFactory.parseString(""),
@@ -135,8 +157,8 @@ class spatialanalysiss5 extends ApplicationContextAware {
     val `sa.size5.r07` = new FlinkExperiment(
       name = s"sa.size5.r07.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.benchmark.IndexBenchmark -p """ + parallel +
-          " ${app.path.apps}/spatial-analysis-flink-jobs-1.0-SNAPSHOT.jar " +
+        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+          " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.7 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
       config = ConfigFactory.parseString(""),
@@ -150,8 +172,8 @@ class spatialanalysiss5 extends ApplicationContextAware {
     val `sa.size5.r08` = new FlinkExperiment(
       name = s"sa.size5.r08.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.benchmark.IndexBenchmark -p """ + parallel +
-          " ${app.path.apps}/spatial-analysis-flink-jobs-1.0-SNAPSHOT.jar " +
+        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+          " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.8 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
       config = ConfigFactory.parseString(""),
@@ -165,8 +187,8 @@ class spatialanalysiss5 extends ApplicationContextAware {
     val `sa.size5.r09` = new FlinkExperiment(
       name = s"sa.size5.r09.node" + nbNodePerEntry,
       command =
-        (""" -v -c de.tu_berlin.dima.benchmark.IndexBenchmark -p """ + parallel +
-          " ${app.path.apps}/spatial-analysis-flink-jobs-1.0-SNAPSHOT.jar " +
+        (""" -v -c de.tu_berlin.dima.""" + className + " -p " + parallel +
+          " ${app.path.apps}/spatial-analysis-flink-jobs-" + jarVersion + "-SNAPSHOT.jar " +
           "--input \"" + input + "\" --output \"" + output + "\" --samplerate 0.9 --nodeperentry " + nbNodePerEntry + " --nbdimension  " + nbDimension
           ).stripMargin.trim,
       config = ConfigFactory.parseString(""),
@@ -188,6 +210,5 @@ class spatialanalysiss5 extends ApplicationContextAware {
       `sa.size5.r08`,
       `sa.size5.r09`))
   }
-
 
 }

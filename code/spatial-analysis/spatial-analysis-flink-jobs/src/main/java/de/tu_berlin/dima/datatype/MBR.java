@@ -15,6 +15,7 @@ public class MBR implements Serializable{
     private boolean isInitialized = true;
     private int nbDimension;
     private long size;
+    private int numBytes;
 
     public MBR(int nbDimension){
         this.nbDimension = nbDimension;
@@ -29,20 +30,10 @@ public class MBR implements Serializable{
     }
 
     public MBR(Point minPoint, Point maxPoint){
-//        this.nbDimension = maxPoint.getNbDimension();
-//        List<Float> maxList = new ArrayList<Float>(nbDimension);
-//        List<Float> minList = new ArrayList<Float>(nbDimension);
-//        for(int i =0; i<nbDimension; i++){
-//            maxList.add(i, Float.MAX_VALUE);
-//            minList.add(i, Float.MIN_VALUE);
-//        }
         this.nbDimension = maxPoint.getNbDimension();
         this.maxPoint = maxPoint;
         this.minPoint = minPoint;
         this.isInitialized = false;
-//
-//        this.addPoint(point1);
-//        this.addPoint(point2);
 
     }
 
@@ -95,17 +86,9 @@ public class MBR implements Serializable{
         }
     }
 
-    // TODO: how can we compare efficiently here
     public void addMBR(MBR mbr){
-        // TODO: check contains here again
-//        if(this.contains(mbr)){
-//            return;
-//        }
-
         this.addPoint(mbr.getMaxPoint());
         this.addPoint(mbr.getMinPoint());
-        // TODO: how to compare here???
-        // put inside or intersect, or above, or under
 
     }
 
@@ -123,6 +106,15 @@ public class MBR implements Serializable{
 
     //TODO: check if MBR is contain in this MBR or not
     public boolean contains(MBR mbr){
+        for(int i = 0; i< mbr.getNbDimension(); i++){
+            float pointMaxVal = mbr.getMaxPoint().getDimension(i);
+            float pointMinVal = mbr.getMinPoint().getDimension(i);
+            float maxVal = this.maxPoint.getDimension(i);
+            float minVal = this.minPoint.getDimension(i);
+            if(pointMaxVal > maxVal || pointMaxVal < minVal || pointMinVal > maxVal || pointMinVal < minVal){
+                return false;
+            }
+        }
         return true;
     }
 
@@ -157,6 +149,31 @@ public class MBR implements Serializable{
         return Math.sqrt(distance);
     }
 
+    public boolean intersects(MBR mbr){
+        if(this.checkIntersect(this, mbr)){
+            return true;
+        }
+        else{
+            return this.checkIntersect(mbr, this);
+        }
+    }
+
+    private boolean checkIntersect(MBR mbr1, MBR mbr2){
+        float[] point1 = new float[2];
+        point1[0] = mbr2.getMinPoint().getDimension(0);
+        point1[1] = mbr2.getMaxPoint().getDimension(1);
+        Point p1 = new Point(point1);
+        float[] point2 = new float[2];
+        point2[0] = mbr2.getMaxPoint().getDimension(0);
+        point2[1] = mbr2.getMinPoint().getDimension(1);
+        Point p2 = new Point(point2);
+
+        if(mbr1.contains(p1) || mbr1.contains(p2) || mbr1.contains(mbr2.getMinPoint()) || mbr1.contains(mbr2.getMaxPoint())){
+            return true;
+        }
+        return false;
+    }
+
     public boolean isInitialized() {
         return isInitialized;
     }
@@ -178,5 +195,13 @@ public class MBR implements Serializable{
 
     public void setSize(long size) {
         this.size = size;
+    }
+
+    public int getNumBytes() {
+        return numBytes;
+    }
+
+    public void setNumBytes(int numBytes) {
+        this.numBytes = numBytes;
     }
 }

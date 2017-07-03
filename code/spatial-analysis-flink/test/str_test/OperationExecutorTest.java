@@ -6,8 +6,10 @@ import de.tu_berlin.dima.RTree;
 import de.tu_berlin.dima.datatype.MBR;
 import de.tu_berlin.dima.datatype.Point;
 import de.tu_berlin.dima.test.IndexBuilderResult;
+import de.tu_berlin.dima.util.Utils;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runners.Suite;
 
@@ -28,7 +30,11 @@ public class OperationExecutorTest {
     private IndexBuilder indexBuilder = new IndexBuilder();
     private OperationExecutor operationExecutor = new OperationExecutor();
 
-    private void prepareData(){
+    private DataSet<RTree> globalTree;
+    private DataSet<RTree> localTrees;
+    private DataSet<Point> partitionedData;
+
+    private void prepareData() throws Exception {
         this.points.clear();
         points.add(TestUtil.create2DPoint(1, 0));
         points.add(TestUtil.create2DPoint(1, 2));
@@ -37,47 +43,58 @@ public class OperationExecutorTest {
         points.add(TestUtil.create2DPoint(10, 4));
         points.add(TestUtil.create2DPoint(-1, 5));
         points.add(TestUtil.create2DPoint(11, 10));
-    }
 
-
-    // What to test
-    // 1. Test STRPartitioner
-    // 2. Test updating boundaries when we do the partitioning
-    // 3. Test local RTree
-    // 4. Test the global RTree
-
-    // TODO: test with sample size = 1
-
-    @Test
-    public void testBoxRangeQuery() throws Exception {
-        prepareData();
-        samplePoints = points.subList(0, points.size()/2);
+        this.samplePoints = points.subList(0, points.size()/2);
 
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
         int parallelism = env.getParallelism();
         double sampleRate = 0.8;
 
-        DataSet<Point> pointDS = env.fromCollection(points);
-        DataSet<Point> samplePointDS = env.fromCollection(samplePoints);
+        DataSet<Point> pointDS = env.fromCollection(this.points);
+        DataSet<Point> samplePointDS = env.fromCollection(this.samplePoints);
+        Utils.registerCustomSerializer(env);
 
-        IndexBuilderResult indexResult = indexBuilder.buildIndexTestVersion(pointDS, pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
+        IndexBuilderResult indexResult = this.indexBuilder.buildIndexTestVersion(pointDS, pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
 
         System.out.println("Global tree: " + indexResult.getGlobalRTree().toString());
         System.out.println("Local tree: ");
         indexResult.getLocalRTree().print();
-        System.out.println(indexResult.getLocalRTree().count());
 
-        DataSet<Point> partitionedData = indexResult.getData();
-        RTree globalTree = indexResult.getGlobalRTree();
-        DataSet<RTree> localTrees = indexResult.getLocalRTree();
+        partitionedData = indexResult.getData();
+        globalTree = indexResult.getGlobalRTree();
+        localTrees = indexResult.getLocalRTree();
+    }
+
+    public static void main(String[] args) throws Exception {
+        OperationExecutorTest test = new OperationExecutorTest();
+        test.testBoxRangeQuery();
+    }
+
+    @Test
+    public void testBoxRangeQuery() throws Exception {
+        prepareData();
 
         Point p1 = TestUtil.create2DPoint(-1,-1);
-        Point p2 = TestUtil.create2DPoint(-1,5);
+        Point p2 = TestUtil.create2DPoint(10,4);
         MBR mbr = new MBR(2);
         mbr.addPoint(p1);
         mbr.addPoint(p2);
 
-        DataSet<Point> result = this.operationExecutor.boxRangeQuery(mbr, partitionedData, globalTree, localTrees, 4);
-        result.print();
+        // Test found result
+        List<Point> actual = this.operationExecutor.boxRangeQuery(mbr, this.partitionedData, this.globalTree).collect();
+        List<Point> expected = new ArrayList<Point>();
+        expected.add(TestUtil.create2DPoint(1, 0));
+        expected.add(TestUtil.create2DPoint(1, 2));
+        expected.add(TestUtil.create2DPoint(2, 2));
+        expected.add(TestUtil.create2DPoint(10, 4));
+
+        for(int i =0; i< expected.size(); i++){
+            Assert.assertEquals("Not found point: " + expected.get(i) , true, actual.contains(expected.get(i)));
+        }
+
+        // Test not found result
+        MBR mbr2 = new MBR(TestUtil.create2DPoint(0,0), TestUtil.create2DPoint(0.5f, 0.5f));
+        List<Point> actual2 = this.operationExecutor.boxRangeQuery(mbr2, this.partitionedData, this.globalTree).collect();
+        Assert.assertEquals("Not empty result", true, actual2.isEmpty());
     }
 }
