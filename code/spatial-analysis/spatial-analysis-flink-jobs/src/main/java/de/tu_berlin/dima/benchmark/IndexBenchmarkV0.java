@@ -58,10 +58,6 @@ public class IndexBenchmarkV0 {
         IndexBuilderResult result = indexBuilder.buildIndex(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
         Long endTime = System.currentTimeMillis();
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 23db139... Change IndexBenchmark to avoid get stuck at collect()
         RTree globalTree = result.getGlobalRTree().collect().get(0);
         System.out.println("\n---------------- Local trees -------------");
         result.getLocalRTree().map(new RichMapFunction<RTree, String>() {
@@ -82,10 +78,6 @@ public class IndexBenchmarkV0 {
         System.out.println(globalTree.getRootNode().getSize() + "," + globalTree.getRootNode().getMbr());
         System.out.println(globalTree.toString());
         System.out.println("---------------- End global tree ---------");
-<<<<<<< HEAD
-
-=======
->>>>>>> 23db139... Change IndexBenchmark to avoid get stuck at collect()
     }
 
 }

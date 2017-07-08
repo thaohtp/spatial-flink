@@ -11,7 +11,7 @@ import org.springframework.context.{ApplicationContext, ApplicationContextAware}
 
 /** `Spatial analysis` experiment fixtures for the 'spatial-analysis' bundle. */
 @Configuration
-class simba extends ApplicationContextAware {
+class simba1 extends ApplicationContextAware {
 
   val size = 1
   val runs = 3
@@ -22,10 +22,10 @@ class simba extends ApplicationContextAware {
   // ---------------------------------------------------
   // default-mac
   // ---------------------------------------------------
-  val parallel = 4
-  val nbNodePerEntry = 40
-  val input = "/jml/data/test/spatial_analysis_flink/input/reduced_20170507.csv"
-  val output = "/jml/data/test/spatial_analysis_flink/input/dummy_test"
+//  val parallel = 4
+//  val nbNodePerEntry = 40
+//  val input = "/jml/data/test/spatial_analysis_flink/input/reduced_20170507.csv"
+//  val output = "/jml/data/test/spatial_analysis_flink/input/dummy_test"
 
   // ---------------------------------------------------
   // ubuntu
@@ -41,10 +41,10 @@ class simba extends ApplicationContextAware {
   // ibm-power-1
   // ---------------------------------------------------
 
-  //  val parallel = 288
-  //  val nbNodePerEntry = 40;
-  //  val input = "/home/hadoop/thaohtp/data/input/gdelt6gb/";
-  //  val output = "/home/hadoop/thaohtp/data/output/dummy-test";
+    val parallel = 240
+    val nbNodePerEntry = 64;
+    val input = "/home/hadoop/thaohtp/data/input/gdelt6gb/";
+    val output = "/home/hadoop/thaohtp/data/output/dummy-test";
 
 
   /* The enclosing application context. */
@@ -61,11 +61,12 @@ class simba extends ApplicationContextAware {
 
   @Bean(name = Array("sb.size1"))
   def `sb.size1`: ExperimentSuite = {
-    val `sb.size1` = new SparkExperiment()(
+    val `sb.size1` = new SparkExperiment(
       name = s"sb.size1",
       command =
         (""" --class org.apache.spark.sql.simba.examples.BenchMarkIndex """ +
           " ${app.path.apps}/simba_2.11-1.0.jar " +
+          parallel + " " +
           "\"" + input + "\" "
           ).stripMargin.trim,
       config = ConfigFactory.parseString(""),

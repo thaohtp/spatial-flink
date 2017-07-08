@@ -42,8 +42,9 @@ class spatialanalysiss1 extends ApplicationContextAware {
   // ibm-power-1
   // ---------------------------------------------------
 
-  val parallel = " -p 200"
-  val nbNodePerEntry = 100;
+    val parallel = " -p 240"
+//  val parallel = " "
+  val nbNodePerEntry = 64;
   val input = "/home/hadoop/thaohtp/data/input/gdelt6gb/";
   val output = "/home/hadoop/thaohtp/data/output/dummy-test";
 

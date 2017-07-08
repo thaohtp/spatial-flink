@@ -28,7 +28,13 @@ import org.springframework.context.{ApplicationContext, ApplicationContextAware}
   classOf[config.fixtures.spatialanalysiss10],
   classOf[config.fixtures.spatialanalysiss1_v0],
   classOf[config.fixtures.spatialanalysiss1_v1],
-  classOf[config.fixtures.simba]
+  classOf[config.fixtures.spatialanalysiss5_v0],
+  classOf[config.fixtures.spatialanalysiss5_v1],
+  classOf[config.fixtures.spatialanalysiss10_v0],
+  classOf[config.fixtures.spatialanalysiss10_v1],
+  classOf[config.fixtures.simba1],
+  classOf[config.fixtures.simba5],
+  classOf[config.fixtures.simba10]
 ))
 class experiments extends ApplicationContextAware {
 

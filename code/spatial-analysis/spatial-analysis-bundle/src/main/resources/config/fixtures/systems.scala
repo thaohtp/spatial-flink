@@ -47,7 +47,7 @@ class systems extends ApplicationContextAware {
     version      = "2.1.0",
     configKey    = "spark",
     lifespan     = Lifespan.EXPERIMENT,
-    dependencies = Set(ctx.getBean("hdfs-2.7.1", classOf[HDFS2])),
+//    dependencies = Set(ctx.getBean("hdfs-2.7.1", classOf[HDFS2])),
     mc           = ctx.getBean(classOf[Mustache.Compiler])
   )
 
