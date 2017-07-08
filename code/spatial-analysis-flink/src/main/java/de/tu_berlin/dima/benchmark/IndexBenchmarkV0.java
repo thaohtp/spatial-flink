@@ -56,32 +56,12 @@ public class IndexBenchmarkV0 {
                     }
                 });
 
-        Long startTime = System.currentTimeMillis();
         IndexBuilder indexBuilder = new IndexBuilder();
         IndexBuilderResult result = indexBuilder.buildIndex(data, nbDimension, maxNodePerEntry, sampleRate, env.getParallelism());
-        Long endTime = System.currentTimeMillis();
 
-
-        RTree globalTree = result.getGlobalRTree().collect().get(0);
-        System.out.println("\n---------------- Local trees -------------");
-        result.getLocalRTree().map(new RichMapFunction<RTree, String>() {
-            @Override
-            public String map(RTree rTree) throws Exception {
-                return "Local tree: " + rTree.getRootNode().getSize() + "," + rTree.getRootNode().getMbr();
-            }
-        }).print();
-        System.out.println("---------------- End local trees -------------");
-
-        System.out.println("\n---------------- Statistics -------------");
-        System.out.println("Start building index: " + startTime + " - " + new Date());
-        System.out.println("End building index: " + endTime + " - " + new Date());
-        System.out.println("Total time of building index: " +(endTime - startTime) + " ms");
-        System.out.println("---------------- End statistics -------------");
-
-        System.out.println("\n---------------- Global tree -------------");
-        System.out.println(globalTree.getRootNode().getSize() + "," + globalTree.getRootNode().getMbr());
-        System.out.println(globalTree.toString());
-        System.out.println("---------------- End global tree ---------");
+        result.getLocalRTree().printOnTaskManager("x");
+        result.getGlobalRTree().printOnTaskManager("x");
+        env.execute();
     }
 
 }
