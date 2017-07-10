@@ -120,8 +120,9 @@ public class MBR implements Serializable{
 
     public int compare(MBR mbr, int dimension){
         //TODO: is medium is the best way to compare two MBR?
-        float val1 = (this.maxPoint.getDimension(dimension) + this.minPoint.getDimension(dimension)) /2;
-        float val2 = (mbr.getMaxPoint().getDimension(dimension) + this.getMinPoint().getDimension(dimension)) /2;
+//        System.out.println("MBR compare: " + this.toString() + " - " + mbr.toString() + " - " + dimension);
+        double val1 = (this.maxPoint.getDimension(dimension) + this.minPoint.getDimension(dimension)) /2.0;
+        double val2 = (mbr.getMaxPoint().getDimension(dimension) + mbr.getMinPoint().getDimension(dimension)) /2.0;
         return val1 > val2 ? 1: (val1 == val2 ? 0: -1);
     }
 
