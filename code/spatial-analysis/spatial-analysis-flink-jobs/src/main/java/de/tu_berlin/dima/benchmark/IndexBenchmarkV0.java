@@ -9,11 +9,14 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.api.java.io.TextOutputFormat;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.core.fs.FileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Benchmark index building time
@@ -58,6 +61,7 @@ public class IndexBenchmarkV0 {
 
         result.getLocalRTree().printOnTaskManager("x");
         result.getGlobalRTree().printOnTaskManager("x");
+        env.execute();
     }
 
 }
