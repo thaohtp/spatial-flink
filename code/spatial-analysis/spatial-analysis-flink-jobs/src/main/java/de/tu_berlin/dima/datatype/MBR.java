@@ -150,28 +150,12 @@ public class MBR implements Serializable{
     }
 
     public boolean intersects(MBR mbr){
-        if(this.checkIntersect(this, mbr)){
-            return true;
+        for(int i =0; i< this.getNbDimension(); i++){
+            if(this.getMaxPoint().getDimension(i) < mbr.getMinPoint().getDimension(i) || this.getMinPoint().getDimension(i) > mbr.getMaxPoint().getDimension(i)){
+                return false;
+            }
         }
-        else{
-            return this.checkIntersect(mbr, this);
-        }
-    }
-
-    private boolean checkIntersect(MBR mbr1, MBR mbr2){
-        float[] point1 = new float[2];
-        point1[0] = mbr2.getMinPoint().getDimension(0);
-        point1[1] = mbr2.getMaxPoint().getDimension(1);
-        Point p1 = new Point(point1);
-        float[] point2 = new float[2];
-        point2[0] = mbr2.getMaxPoint().getDimension(0);
-        point2[1] = mbr2.getMinPoint().getDimension(1);
-        Point p2 = new Point(point2);
-
-        if(mbr1.contains(p1) || mbr1.contains(p2) || mbr1.contains(mbr2.getMinPoint()) || mbr1.contains(mbr2.getMaxPoint())){
-            return true;
-        }
-        return false;
+        return true;
     }
 
     public boolean isInitialized() {
