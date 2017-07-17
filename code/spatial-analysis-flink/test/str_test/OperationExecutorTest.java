@@ -97,4 +97,44 @@ public class OperationExecutorTest {
         List<Point> actual2 = this.operationExecutor.boxRangeQuery(mbr2, this.partitionedData, this.globalTree).collect();
         Assert.assertEquals("Not empty result", true, actual2.isEmpty());
     }
+
+    @Test
+    public void testkNNQuery() throws Exception{
+        prepareData();
+        samplePoints = points.subList(0, points.size()/2);
+
+        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        int parallelism = env.getParallelism();
+        double sampleRate = 0.8;
+
+        DataSet<Point> pointDS = env.fromCollection(points);
+        DataSet<Point> samplePointDS = env.fromCollection(samplePoints);
+
+        IndexBuilderResult indexResult = indexBuilder.buildIndexTestVersion(pointDS, pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
+        DataSet<Point> partitionedData = indexResult.getData();
+        DataSet<RTree> globalTree = indexResult.getGlobalRTree();
+        DataSet<RTree> localTrees = indexResult.getLocalRTree();
+
+        globalTree.printOnTaskManager("x");
+        localTrees.printOnTaskManager("xxx");
+
+        Point p1 = TestUtil.create2DPoint(-1,-1);
+
+        DataSet<Point> result = this.operationExecutor.kNNQuery(p1, 4, partitionedData);
+//        result.print();
+        result.printOnTaskManager("x");
+//        System.out.println(env.getExecutionPlan());
+        List<Point> actual = result.collect();
+
+        List<Point> expected = new ArrayList<Point>();
+        expected.add(TestUtil.create2DPoint(1, 0));
+        expected.add(TestUtil.create2DPoint(1, 2));
+        expected.add(TestUtil.create2DPoint(2, 2));
+        expected.add(TestUtil.create2DPoint(-1, 5));
+
+        for(int i =0; i< expected.size(); i++){
+            Assert.assertEquals("Not found point: " + expected.get(i) , true, actual.contains(expected.get(i)));
+        }
+
+    }
 }
