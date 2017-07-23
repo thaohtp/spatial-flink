@@ -31,8 +31,25 @@ public class MBR implements Serializable{
 
     public MBR(Point minPoint, Point maxPoint){
         this.nbDimension = maxPoint.getNbDimension();
-        this.maxPoint = maxPoint;
-        this.minPoint = minPoint;
+        // re-check again here
+        List<Float> minList = new ArrayList<Float>(nbDimension);
+        List<Float> maxList = new ArrayList<Float>(nbDimension);
+
+        for(int i = 0; i< maxPoint.getNbDimension(); i++){
+            float maxVal = maxPoint.getDimension(i);
+            float minVal = minPoint.getDimension(i);
+            if(maxVal < minVal){
+                minList.add(maxVal);
+                maxList.add(minVal);
+            }
+            else{
+                minList.add(minVal);
+                maxList.add(maxVal);
+            }
+        }
+
+        this.maxPoint = new Point(maxList);
+        this.minPoint = new Point(minList);
         this.isInitialized = false;
 
     }
@@ -144,7 +161,7 @@ public class MBR implements Serializable{
         for(int i =0; i< nbDimension; i++){
             float center = (this.maxPoint.getDimension(i) + this.minPoint.getDimension(i)) /2;
             float distanceL1 = center - point.getDimension(i);
-            distance = distance + Math.pow(distanceL1, 2);
+            distance = distance + distanceL1 * distanceL1;
         }
         return Math.sqrt(distance);
     }
@@ -156,6 +173,60 @@ public class MBR implements Serializable{
             }
         }
         return true;
+    }
+
+    public double calculateDistanceToBorder(Point point){
+        double distance = 0L;
+        for(int i =0; i< nbDimension; i++){
+            if(point.getDimension(i) < this.getMinPoint().getDimension(i)){
+                distance += (point.getDimension(i) - this.getMinPoint().getDimension(i)) * (point.getDimension(i) - this.getMinPoint().getDimension(i));
+            }
+            else{
+                if(point.getDimension(i) > this.getMaxPoint().getDimension(i)){
+                    distance += (point.getDimension(i) - this.getMaxPoint().getDimension(i)) * (point.getDimension(i) - this.getMaxPoint().getDimension(i));
+                }
+            }
+        }
+        return Math.sqrt(distance);
+    }
+
+    // TODO: Calculate here
+    public boolean intersects(Point point, Float radius){
+        if(this.contains(point)){
+            return true;
+        }
+        else{
+            double distance = this.calculateDistanceToBorder(point);
+            if(distance <= radius){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean intersects(Point point, Double radius){
+        if(this.contains(point)){
+            return true;
+        }
+        else{
+            double distance = this.calculateDistanceToBorder(point);
+            if(distance <= radius){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public double calcMaxDistanceFromCenter(){
+        return this.calculateDistance(this.getMaxPoint());
+    }
+
+    public Point getCenter(){
+        float[] vals = new float[nbDimension];
+        for(int i =0; i< nbDimension; i++){
+            vals[i] = (this.getMinPoint().getDimension(i) + this.getMaxPoint().getDimension(i)) / 2f;
+        }
+        return new Point(vals);
     }
 
     public boolean isInitialized() {

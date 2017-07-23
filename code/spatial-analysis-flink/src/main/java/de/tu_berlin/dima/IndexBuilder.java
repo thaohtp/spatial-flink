@@ -564,6 +564,7 @@ public class IndexBuilder implements Serializable {
                         while (iter.hasNext()) {
                             Tuple2<Integer, RTree> tuple = iter.next();
                             RTree rtree = tuple.f1;
+                            System.out.println("PartitionMBR: " + rtree.getRootNode().getMbr());
                             PartitionedMBR point = new PartitionedMBR(rtree.getRootNode().getMbr(), tuple.f0);
                             point.setSize(rtree.getRootNode().getSize());
                             partitionedMBRList.add(point);

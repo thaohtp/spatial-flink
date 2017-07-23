@@ -59,12 +59,12 @@ public class Point implements Key<Point>{
         return this;
     }
 
-    public float calcDistance(Point point){
-        float sum = 0;
+    public double calcDistance(Point point){
+        double sum = 0;
         for(int i = 0; i<point.getNbDimension(); i++){
             sum += (this.getDimension(i) - point.getDimension(i)) * (this.getDimension(i) - point.getDimension(i));
         }
-        return sum;
+        return Math.sqrt(sum);
     }
 
     public int getNbDimension() {
