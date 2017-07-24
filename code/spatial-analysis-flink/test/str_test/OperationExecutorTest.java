@@ -15,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runners.Suite;
 
+import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,15 +28,18 @@ import java.util.Map;
 public class OperationExecutorTest {
     private static final int POINTS_PER_NODE = 3;
     private static final int NB_DIMENSION = 2;
+    private static float sampleRate = 1f;
+    private static int parallelism = 4;
 
     private List<Point> points = new ArrayList<Point>();
     private List<Point> samplePoints = new ArrayList<Point>();
+    private DataSet<Point> leftDS;
+    private DataSet<Point> rightDS;
 
     private IndexBuilder indexBuilder = new IndexBuilder();
-    private OperationExecutor operationExecutor = new OperationExecutor();
+    private OperationExecutor operationExecutor = new OperationExecutor(NB_DIMENSION, POINTS_PER_NODE, parallelism, sampleRate);
 
     private DataSet<RTree> globalTree;
-    private DataSet<RTree> localTrees;
     private DataSet<Point> partitionedData;
 
     private void prepareData() throws Exception {
@@ -55,7 +59,6 @@ public class OperationExecutorTest {
         double sampleRate = 0.8;
 
         DataSet<Point> pointDS = env.fromCollection(this.points);
-        DataSet<Point> samplePointDS = env.fromCollection(this.samplePoints);
         Utils.registerCustomSerializer(env);
 
         IndexBuilderResult indexResult = this.indexBuilder.buildIndexTestVersion(pointDS, pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
@@ -66,9 +69,33 @@ public class OperationExecutorTest {
 
         partitionedData = indexResult.getData();
         globalTree = indexResult.getGlobalRTree();
-        localTrees = indexResult.getLocalRTree();
     }
 
+    private void prepareDataWithoutIndex() throws Exception {
+        this.points.clear();
+        points.add(TestUtil.create2DPoint(1, 0));
+        points.add(TestUtil.create2DPoint(1, 2));
+        points.add(TestUtil.create2DPoint(2, 2));
+        points.add(TestUtil.create2DPoint(3, 9));
+        points.add(TestUtil.create2DPoint(10, 4));
+        points.add(TestUtil.create2DPoint(-1, 5));
+        points.add(TestUtil.create2DPoint(11, 10));
+
+        ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
+        this.leftDS = env.fromCollection(this.points);
+
+        List<Point> points2 = new ArrayList<Point>();
+        points2.add(TestUtil.create2DPoint(1, 0));
+        points2.add(TestUtil.create2DPoint(1, 2));
+        points2.add(TestUtil.create2DPoint(2, 2));
+        points2.add(TestUtil.create2DPoint(3, 9));
+        points2.add(TestUtil.create2DPoint(10, 4));
+        points2.add(TestUtil.create2DPoint(-1, 5));
+        points2.add(TestUtil.create2DPoint(11, 10));
+
+        this.rightDS = env.fromCollection(points2);
+
+    }
     public static void main(String[] args) throws Exception {
         OperationExecutorTest test = new OperationExecutorTest();
         test.testBoxRangeQuery();
@@ -76,7 +103,7 @@ public class OperationExecutorTest {
 
     @Test
     public void testBoxRangeQuery() throws Exception {
-        prepareData();
+        prepareDataWithoutIndex();
 
         Point p1 = TestUtil.create2DPoint(-1,-1);
         Point p2 = TestUtil.create2DPoint(10,4);
@@ -85,7 +112,7 @@ public class OperationExecutorTest {
         mbr.addPoint(p2);
 
         // Test found result
-        List<Point> actual = this.operationExecutor.boxRangeQuery(mbr, this.partitionedData, this.globalTree).collect();
+        List<Point> actual = this.operationExecutor.boxRangeQuery(mbr, this.leftDS).collect();
         List<Point> expected = new ArrayList<Point>();
         expected.add(TestUtil.create2DPoint(1, 0));
         expected.add(TestUtil.create2DPoint(1, 2));
@@ -98,7 +125,7 @@ public class OperationExecutorTest {
 
         // Test not found result
         MBR mbr2 = new MBR(TestUtil.create2DPoint(0,0), TestUtil.create2DPoint(0.5f, 0.5f));
-        List<Point> actual2 = this.operationExecutor.boxRangeQuery(mbr2, this.partitionedData, this.globalTree).collect();
+        List<Point> actual2 = this.operationExecutor.boxRangeQuery(mbr2, this.leftDS).collect();
         Assert.assertEquals("Not empty result", true, actual2.isEmpty());
     }
 
@@ -125,9 +152,7 @@ public class OperationExecutorTest {
         Point p1 = TestUtil.create2DPoint(-1,-1);
 
         DataSet<Point> result = this.operationExecutor.kNNQuery(p1, 4, partitionedData);
-//        result.print();
         result.printOnTaskManager("x");
-//        System.out.println(env.getExecutionPlan());
         List<Point> actual = result.collect();
 
         List<Point> expected = new ArrayList<Point>();
@@ -200,24 +225,9 @@ public class OperationExecutorTest {
 
     @Test
     public void testkNNJoin() throws Exception{
-        prepareData();
-        samplePoints = points.subList(0, points.size()/2);
+        prepareDataWithoutIndex();
 
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        int parallelism = env.getParallelism();
-        double sampleRate = 0.8;
-
-        DataSet<Point> pointDS = env.fromCollection(points);
-        DataSet<Point> pointDS2 = env.fromCollection(points);
-
-        IndexBuilderResult indexResult = indexBuilder.buildIndexTestVersion(pointDS, pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
-        DataSet<RTree> globalTree = indexResult.getGlobalRTree();
-        DataSet<RTree> localTrees = indexResult.getLocalRTree();
-
-        globalTree.printOnTaskManager("x");
-        localTrees.printOnTaskManager("xxx");
-
-        List<Tuple2<Point, Point>> result = this.operationExecutor.kNNJoin(3, 2, pointDS, pointDS2, POINTS_PER_NODE, sampleRate, parallelism).collect();
+        List<Tuple2<Point, Point>> result = this.operationExecutor.kNNJoin(3, this.leftDS, this.rightDS).collect();
 
         Map<String, List<Point>> expectedMap = new HashMap<String, List<Point>>();
         List<Point> expected10 = new ArrayList<Point>();
@@ -272,12 +282,12 @@ public class OperationExecutorTest {
 
     @Test
     public void testCircleRange() throws Exception {
-        prepareData();
+        prepareDataWithoutIndex();
 
         Point queryPoint = TestUtil.create2DPoint(1,2);
         float radius = 5f;
         // Test found result
-        List<Point> actual = this.operationExecutor.circleRangeQuery(queryPoint, radius, this.partitionedData, this.globalTree).collect();
+        List<Point> actual = this.operationExecutor.circleRangeQuery(queryPoint, radius, this.leftDS).collect();
         List<Point> expected = new ArrayList<Point>();
         expected.add(TestUtil.create2DPoint(1, 0));
         expected.add(TestUtil.create2DPoint(1, 2));
@@ -293,7 +303,7 @@ public class OperationExecutorTest {
         // Test not found result
         Point notFoundPoint = TestUtil.create2DPoint(3,4);
         float notFoundRadius = 1;
-        List<Point> actual2 = this.operationExecutor.circleRangeQuery(notFoundPoint, notFoundRadius, this.partitionedData, this.globalTree).collect();
+        List<Point> actual2 = this.operationExecutor.circleRangeQuery(notFoundPoint, notFoundRadius, this.leftDS).collect();
         Assert.assertEquals("Not empty result", true, actual2.isEmpty());
 
 
@@ -345,7 +355,7 @@ public class OperationExecutorTest {
         for(int i =0; i<this.points.size(); i++){
             Point curPoint = this.points.get(i);
             List<Point> expectedList = expectedMap.get(curPoint.toString());
-            List<Point> actualList = this.operationExecutor.circleRangeQuery(curPoint, 6f, this.partitionedData, this.globalTree).collect();
+            List<Point> actualList = this.operationExecutor.circleRangeQuery(curPoint, 6f, this.leftDS).collect();
             for(int j =0; j<actualList.size(); j++){
                 Assert.assertEquals("Not found point in actual list: " + expectedList.get(j) , true, actualList.contains(expectedList.get(j)));
             }
@@ -357,22 +367,7 @@ public class OperationExecutorTest {
 
     @Test
     public void testDistanceJoin() throws Exception {
-        prepareData();
-        samplePoints = points.subList(0, points.size()/2);
-
-        final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-        int parallelism = env.getParallelism();
-        double sampleRate = 0.8;
-
-        DataSet<Point> pointDS = env.fromCollection(points);
-        DataSet<Point> pointDS2 = env.fromCollection(points);
-
-        IndexBuilderResult indexResult = indexBuilder.buildIndex(pointDS, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
-        DataSet<RTree> globalTree = indexResult.getGlobalRTree();
-
-
-        IndexBuilderResult indexResult2 = indexBuilder.buildIndex(pointDS2, NB_DIMENSION, POINTS_PER_NODE, sampleRate, parallelism);
-        DataSet<RTree> globalTree2 = indexResult2.getGlobalRTree();
+        prepareDataWithoutIndex();
 
         Map<String, List<Point>> expectedMap = new HashMap<String, List<Point>>();
         List<Point> expected10 = new ArrayList<Point>();
@@ -420,7 +415,7 @@ public class OperationExecutorTest {
         expected1110.add(TestUtil.create2DPoint(10,4));
         expectedMap.put(TestUtil.create2DPoint(11,10).toString(), expected1110);
 
-        List<Tuple2<Point, Point>> result = this.operationExecutor.distanceJoin(6f, pointDS, globalTree, pointDS2, globalTree2).collect();
+        List<Tuple2<Point, Point>> result = this.operationExecutor.distanceJoin(6f, this.leftDS, this.rightDS).collect();
         for(int i =0; i<result.size(); i++){
             Point left = result.get(i).f0;
             Point right = result.get(i).f1;

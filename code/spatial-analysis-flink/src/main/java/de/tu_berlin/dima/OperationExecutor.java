@@ -19,9 +19,30 @@ import java.util.*;
  * Created by JML on 6/27/17.
  */
 public class OperationExecutor {
+    private int numDimension;
+    private int maxNodePerEntry;
+    private int parallelism;
+    private float sampleRate;
+    private IndexBuilder indexBuilder;
+
+    public OperationExecutor(int numDimension, int maxNodePerEntry, int parallelism, float sampleRate){
+        this.numDimension = numDimension;
+        this.maxNodePerEntry = maxNodePerEntry;
+        this.parallelism = parallelism;
+        this.sampleRate = sampleRate;
+        this.indexBuilder = new IndexBuilder();
+    }
+
+
+    public DataSet<Point> boxRangeQuery(final MBR box, DataSet<Point> data) throws Exception {
+        IndexBuilderResult indexBuilderResult = this.indexBuilder.buildIndex(data, this.numDimension, this.maxNodePerEntry, this.sampleRate, this.parallelism);
+        DataSet<RTree> globalTree = indexBuilderResult.getGlobalRTree();
+        DataSet<Point> partitionedData = indexBuilderResult.getData();
+        return this.boxRangeQuery(box, partitionedData, globalTree);
+
+    }
 
     public DataSet<Point> boxRangeQuery(final MBR box, DataSet<Point> partitionedData, DataSet<RTree> globalTree) {
-        // initialize empty vector
         DataSet<Integer> partitionFlags = globalTree.flatMap(new RichFlatMapFunction<RTree, PartitionedMBR>() {
             @Override
             public void flatMap(RTree rTree, Collector<PartitionedMBR> collector) throws Exception {
@@ -77,10 +98,8 @@ public class OperationExecutor {
                     public void mapPartition(Iterable<Tuple2<Point, Double>> iterable, Collector<Tuple2<Point, Double>> collector) throws Exception {
                         int count = 0;
                         Iterator<Tuple2<Point, Double>> iter = iterable.iterator();
-                        String temp = "SortPartition " + getRuntimeContext().getIndexOfThisSubtask() + ": ";
                         while (iter.hasNext() && count < k) {
                             Tuple2<Point, Double> tuple = iter.next();
-                            temp += tuple.f0.toString() + " - " + tuple.f1 + " ";
                             collector.collect(tuple);
                             count++;
                         }
@@ -109,6 +128,14 @@ public class OperationExecutor {
                     }
                 });
         return result;
+    }
+
+
+    public DataSet<Point> circleRangeQuery(final Point queryPoint, final Float radius, DataSet<Point> data) throws Exception {
+        IndexBuilderResult indexBuilderResult = this.indexBuilder.buildIndex(data, this.numDimension, this.maxNodePerEntry, this.sampleRate, this.parallelism);
+        DataSet<RTree> globalTree = indexBuilderResult.getGlobalRTree();
+        DataSet<Point> partitionedData = indexBuilderResult.getData();
+        return this.circleRangeQuery(queryPoint, radius, partitionedData, globalTree);
     }
 
     public DataSet<Point> circleRangeQuery(final Point queryPoint, final Float radius, DataSet<Point> partitionedData, DataSet<RTree> globalTree) {
@@ -153,7 +180,15 @@ public class OperationExecutor {
         return result;
     }
 
-    public DataSet<Tuple2<Point, Point>> distanceJoin(final float distance, DataSet<Point> left, DataSet<RTree> leftTree, final DataSet<Point> right, DataSet<RTree> rightTree) {
+    public DataSet<Tuple2<Point, Point>> distanceJoin(final float distance, DataSet<Point> left, final DataSet<Point> right) throws Exception {
+        IndexBuilderResult leftResult = this.indexBuilder.buildIndex(left, this.numDimension, this.maxNodePerEntry, this.sampleRate, this.parallelism);
+        DataSet<RTree> leftGlobalTree = leftResult.getGlobalRTree();
+        DataSet<Point> leftPartitionedData = leftResult.getData();
+        DataSet<Point> rightPartitionedData = this.indexBuilder.partition(right, this.numDimension, this.maxNodePerEntry, this.sampleRate, this.parallelism);
+        return this.distanceJoin(distance, leftPartitionedData, leftGlobalTree, rightPartitionedData);
+
+    }
+    public DataSet<Tuple2<Point, Point>> distanceJoin(final float distance, DataSet<Point> left, DataSet<RTree> leftTree, final DataSet<Point> right) {
         // build index for one data set
         DataSet<Tuple2<Integer, Point>> right_joined_partition = right
                 .flatMap(new RichFlatMapFunction<Point, Tuple2<Integer, Point>>() {
@@ -218,12 +253,19 @@ public class OperationExecutor {
         return result;
     }
 
-    public DataSet<Tuple2<Point, Point>> kNNJoin(final int k, final int numDimension, final DataSet<Point> left, DataSet<Point> right, final int maxNodePerEntry, final double sampleRate, final int parallelism) throws Exception {
-        DataSet<Point> rightSample = DataSetUtils.sample(right, false, sampleRate);
-        final IndexBuilder indexBuilder = new IndexBuilder();
-        IndexBuilderResult leftResult = indexBuilder.buildIndex(left, numDimension, maxNodePerEntry, sampleRate, parallelism);
+    public DataSet<Tuple2<Point, Point>> kNNJoin(final int k, final DataSet<Point> left, DataSet<Point> right) throws Exception {
+        IndexBuilderResult leftResult = this.indexBuilder.buildIndex(left, this.numDimension, this.maxNodePerEntry, this.sampleRate, this.parallelism);
+        DataSet<Point> leftPartitioned = leftResult.getData();
+        DataSet<RTree> leftTree = leftResult.getGlobalRTree();
+        DataSet<Point> rightPartitioned = this.indexBuilder.partition(right, this.numDimension, this.maxNodePerEntry, this.sampleRate, this.parallelism);
+        return this.kNNJoin(k, leftPartitioned, leftTree, rightPartitioned);
+    }
+
+
+    public DataSet<Tuple2<Point, Point>> kNNJoin(final int k, final DataSet<Point> leftPartitioned, final DataSet<RTree> leftTree, final DataSet<Point> rightPartitioned) throws Exception {
+        DataSet<Point> rightSample = DataSetUtils.sample(rightPartitioned, false, this.sampleRate);
         // Find the center and maxDistance for each MBR of Left
-        DataSet<Tuple3<Integer, Point, Double>> leftPartitionedBounds = leftResult.getGlobalRTree()
+        DataSet<Tuple3<Integer, Point, Double>> leftPartitionedBounds = leftTree
                 .flatMap(new FlatMapFunction<RTree, Tuple3<Integer, Point, Double>>() {
                     @Override
                     public void flatMap(RTree rTree, Collector<Tuple3<Integer, Point, Double>> collector) throws Exception {
@@ -239,18 +281,7 @@ public class OperationExecutor {
                 });
 
         // Build Rtree for sample data of Right
-        DataSet<RTree> rightSampleTree = rightSample.reduceGroup(new GroupReduceFunction<Point, RTree>() {
-            @Override
-            public void reduce(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
-                Iterator<Point> iter = iterable.iterator();
-                List<Point> data = new ArrayList<Point>();
-                while (iter.hasNext()) {
-                    data.add(iter.next());
-                }
-                RTree tree = indexBuilder.createLocalRTree(data, numDimension, maxNodePerEntry);
-                collector.collect(tree);
-            }
-        });
+        DataSet<RTree> rightSampleTree = rightSample.reduceGroup(new SampleTreeGroupReduceFunc(this.indexBuilder, this.numDimension, this.maxNodePerEntry));
 
         // Build theta for each MBR of Left
         DataSet<Tuple4<Integer, Point, Double, Double>> thetaBound = leftPartitionedBounds
@@ -271,7 +302,7 @@ public class OperationExecutor {
                 })
                 .withBroadcastSet(rightSampleTree, "rightSampleTree");
 
-        DataSet<Tuple2<Integer, Point>> rightJoinPartitioned = right
+        DataSet<Tuple2<Integer, Point>> rightJoinPartitioned = rightPartitioned
                 .flatMap(new RichFlatMapFunction<Point, Tuple2<Integer, Point>>() {
                     List<Tuple4<Integer, Point, Double, Double>> thetaBound;
 
@@ -296,16 +327,8 @@ public class OperationExecutor {
                     }
                 })
                 .withBroadcastSet(thetaBound, "thetaBound");
-//                .partitionByHash(0);
-        rightJoinPartitioned.map(new MapFunction<Tuple2<Integer,Point>, Object>() {
-            @Override
-            public Object map(Tuple2<Integer, Point> tuple) throws Exception {
 
-                return "";
-            }
-        });
-
-        DataSet<Tuple2<Point, Point>> result = leftResult.getData().map(new RichMapFunction<Point, Tuple2<Integer, Point>>() {
+        DataSet<Tuple2<Point, Point>> result = leftPartitioned.map(new RichMapFunction<Point, Tuple2<Integer, Point>>() {
             @Override
             public Tuple2<Integer, Point> map(Point point) throws Exception {
                 return new Tuple2<Integer, Point>(getRuntimeContext().getIndexOfThisSubtask(), point);
@@ -314,25 +337,64 @@ public class OperationExecutor {
                 .coGroup(rightJoinPartitioned)
                 .where(0)
                 .equalTo(0)
-                .with(new CoGroupFunction<Tuple2<Integer, Point>, Tuple2<Integer, Point>, Tuple2<Point, Point>>() {
-                    @Override
-                    public void coGroup(Iterable<Tuple2<Integer, Point>> iterable, Iterable<Tuple2<Integer, Point>> iterable1, Collector<Tuple2<Point, Point>> collector) throws Exception {
-                        Iterator<Tuple2<Integer, Point>> leftIter = iterable.iterator();
-                        Iterator<Tuple2<Integer, Point>> rightIter = iterable1.iterator();
-                        List<Point> rightPoints = new ArrayList<Point>();
-                        while(rightIter.hasNext()){
-                            rightPoints.add(rightIter.next().f1);
-                        }
-                        RTree tree = indexBuilder.createLocalRTree(rightPoints, numDimension, maxNodePerEntry);
-                        while(leftIter.hasNext()){
-                            Tuple2<Integer, Point> leftTuple = leftIter.next();
-                            List<Point> kNNPoints = tree.kNN2(leftTuple.f1, k);
-                            for(int i =0; i< kNNPoints.size(); i++){
-                                collector.collect(new Tuple2<Point, Point>(leftTuple.f1, kNNPoints.get(i)));
-                            }
-                        }
-                    }
-                });
+                .with(new KNNJoinCoGroupFunc(this.indexBuilder, this.numDimension, this.maxNodePerEntry, k));
         return result;
+    }
+
+    private class SampleTreeGroupReduceFunc implements GroupReduceFunction<Point, RTree>{
+        private IndexBuilder indexBuilder;
+        private int numDimension;
+        private int maxNodePerEntry;
+
+        public SampleTreeGroupReduceFunc(IndexBuilder indexBuilder, int numDimension, int maxNodePerEntry){
+            this.indexBuilder = indexBuilder;
+            this.numDimension = numDimension;
+            this.maxNodePerEntry =maxNodePerEntry;
+        }
+
+        @Override
+        public void reduce(Iterable<Point> iterable, Collector<RTree> collector) throws Exception {
+            Iterator<Point> iter = iterable.iterator();
+            List<Point> data = new ArrayList<Point>();
+            while (iter.hasNext()) {
+                data.add(iter.next());
+            }
+            RTree tree = indexBuilder.createLocalRTree(data, numDimension, maxNodePerEntry);
+            collector.collect(tree);
+        }
+    }
+
+    private class KNNJoinCoGroupFunc implements CoGroupFunction<Tuple2<Integer, Point>, Tuple2<Integer, Point>, Tuple2<Point, Point>> {
+        private IndexBuilder indexBuilder;
+        private int numDimension;
+        private int maxNodePerEntry;
+        private int k;
+
+        public KNNJoinCoGroupFunc(IndexBuilder indexBuilder, int numDimension, int maxNodePerEntry, int k){
+            this.indexBuilder = indexBuilder;
+            this.numDimension = numDimension;
+            this.maxNodePerEntry =maxNodePerEntry;
+            this.k = k;
+        }
+
+        @Override
+        public void coGroup(Iterable<Tuple2<Integer, Point>> iterable, Iterable<Tuple2<Integer, Point>> iterable1, Collector<Tuple2<Point, Point>> collector) throws Exception {
+            Iterator<Tuple2<Integer, Point>> leftIter = iterable.iterator();
+            Iterator<Tuple2<Integer, Point>> rightIter = iterable1.iterator();
+            List<Point> rightPoints = new ArrayList<Point>();
+            while(rightIter.hasNext()){
+                rightPoints.add(rightIter.next().f1);
+            }
+            if(!rightPoints.isEmpty()){
+                RTree tree = indexBuilder.createLocalRTree(rightPoints, numDimension, maxNodePerEntry);
+                while(leftIter.hasNext()){
+                    Tuple2<Integer, Point> leftTuple = leftIter.next();
+                    List<Point> kNNPoints = tree.kNN2(leftTuple.f1, k);
+                    for(int i =0; i< kNNPoints.size(); i++){
+                        collector.collect(new Tuple2<Point, Point>(leftTuple.f1, kNNPoints.get(i)));
+                    }
+                }
+            }
+        }
     }
 }
