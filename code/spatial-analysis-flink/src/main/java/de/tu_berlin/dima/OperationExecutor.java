@@ -231,7 +231,7 @@ public class OperationExecutor {
                 return new Tuple2<Integer, Point>(getRuntimeContext().getIndexOfThisSubtask(), point);
             }
         })
-                .join(right_joined_partition, JoinOperatorBase.JoinHint.REPARTITION_HASH_FIRST)
+                .join(right_joined_partition)
                 .where(0)
                 .equalTo(0)
                 .filter(new FilterFunction<Tuple2<Tuple2<Integer, Point>, Tuple2<Integer, Point>>>() {

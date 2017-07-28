@@ -120,6 +120,19 @@ public class IndexBuilder implements Serializable {
     }
 
 
+    public DataSet<Point> partition(DataSet<Point> data, final int nbDimension, final int nbNodePerEntry, final double sampleRate, int parallelism) throws Exception {
+        // Step 1: create MBR and STRPartitioner based on sampled data
+        STRPartitioner partitioner = createSTRPartitioner(data, nbDimension, nbNodePerEntry, sampleRate, parallelism);
+        // Partition data
+        DataSet<Point> partitionedData = data.partitionCustom(partitioner, new KeySelector<Point, Point>() {
+            @Override
+            public Point getKey(Point point) throws Exception {
+                return point;
+            }
+        });
+        return partitionedData;
+    }
+
     /**
      * This method is used for creating STRPartitioner based on sampled data.
      *
