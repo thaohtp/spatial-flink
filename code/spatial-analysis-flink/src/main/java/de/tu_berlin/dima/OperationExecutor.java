@@ -84,6 +84,39 @@ public class OperationExecutor {
         return result;
     }
 
+    public DataSet<Point> boxRangeQuery(final MBR box, DataSet<Point> partitionedData, DataSet<RTree> globalTree, DataSet<RTree> localTrees) {
+        DataSet<Integer> partitionFlags = globalTree.flatMap(new RichFlatMapFunction<RTree, PartitionedMBR>() {
+            @Override
+            public void flatMap(RTree rTree, Collector<PartitionedMBR> collector) throws Exception {
+                List<PartitionedMBR> partitionedMBRS = rTree.search(box);
+                for (int i = 0; i < partitionedMBRS.size(); i++) {
+                    collector.collect(partitionedMBRS.get(i));
+                }
+            }
+        })
+                .map(new MapFunction<PartitionedMBR, Integer>() {
+                    @Override
+                    public Integer map(PartitionedMBR partitionedMBR) throws Exception {
+                        return partitionedMBR.getPartitionNumber();
+                    }
+                });
+
+        DataSet<Point> result = localTrees
+                .flatMap(new RichFlatMapFunction<RTree, Point>() {
+                    @Override
+                    public void flatMap(RTree rTree, Collector<Point> collector) throws Exception {
+                        List<Integer> partitionFlags = getRuntimeContext().getBroadcastVariable("partitionFlags");
+                        if (partitionFlags.contains(getRuntimeContext().getIndexOfThisSubtask())) {
+                            List<Point> points = rTree.boxRange(box);
+                            for(int i = 0; i< points.size(); i++){
+                                collector.collect(points.get(i));
+                            }
+                        }
+                    }
+                }).withBroadcastSet(partitionFlags, "partitionFlags");
+        return result;
+    }
+
     public DataSet<Point> kNNQuery(final Point queryPoint, final Integer k, DataSet<Point> partitionedData) {
         DataSet<Point> result = partitionedData.map(new RichMapFunction<Point, Tuple2<Point, Double>>() {
             @Override
@@ -130,7 +163,6 @@ public class OperationExecutor {
         return result;
     }
 
-
     public DataSet<Point> circleRangeQuery(final Point queryPoint, final Float radius, DataSet<Point> data) throws Exception {
         IndexBuilderResult indexBuilderResult = this.indexBuilder.buildIndex(data, this.numDimension, this.maxNodePerEntry, this.sampleRate, this.parallelism);
         DataSet<RTree> globalTree = indexBuilderResult.getGlobalRTree();
@@ -163,7 +195,8 @@ public class OperationExecutor {
                         if (partitionFlags.contains(getRuntimeContext().getIndexOfThisSubtask())) {
                             Iterator<Point> pointIter = iterable.iterator();
                             while (pointIter.hasNext()) {
-                                collector.collect(pointIter.next());
+                                Point p = pointIter.next();
+                                collector.collect(p);
                             }
                         }
 
@@ -180,7 +213,41 @@ public class OperationExecutor {
         return result;
     }
 
-    public DataSet<Tuple2<Point, Point>> distanceJoin(final float distance, DataSet<Point> left, final DataSet<Point> right) throws Exception {
+
+    public DataSet<Point> circleRangeQuery(final Point queryPoint, final Float radius, DataSet<Point> partitionedData, DataSet<RTree> globalTree, DataSet<RTree> localTrees) {
+        DataSet<Integer> partitionFlags = globalTree.flatMap(new RichFlatMapFunction<RTree, PartitionedMBR>() {
+            @Override
+            public void flatMap(RTree rTree, Collector<PartitionedMBR> collector) throws Exception {
+                List<PartitionedMBR> partitionedMBRS = rTree.search(queryPoint, radius);
+                for (int i = 0; i < partitionedMBRS.size(); i++) {
+                    collector.collect(partitionedMBRS.get(i));
+                }
+            }
+        })
+                .map(new MapFunction<PartitionedMBR, Integer>() {
+                    @Override
+                    public Integer map(PartitionedMBR partitionedMBR) throws Exception {
+                        return partitionedMBR.getPartitionNumber();
+                    }
+                });
+
+        DataSet<Point> result = localTrees.flatMap(new RichFlatMapFunction<RTree, Point>() {
+            @Override
+            public void flatMap(RTree rTree, Collector<Point> collector) throws Exception {
+                List<Integer> partitionFlags = getRuntimeContext().getBroadcastVariable("partitionFlags");
+                if (partitionFlags.contains(getRuntimeContext().getIndexOfThisSubtask())) {
+                    List<Point> result = rTree.circleRange(queryPoint, radius);
+                    for(int i =0; i< result.size(); i++){
+                       collector.collect(result.get(i));
+                    }
+                }
+            }
+        }).withBroadcastSet(partitionFlags, "partitionFlags");
+        return result;
+    }
+
+
+    public DataSet<JoinedRow> distanceJoin(final float distance, DataSet<Point> left, final DataSet<Point> right) throws Exception {
         IndexBuilderResult leftResult = this.indexBuilder.buildIndex(left, this.numDimension, this.maxNodePerEntry, this.sampleRate, this.parallelism);
         DataSet<RTree> leftGlobalTree = leftResult.getGlobalRTree();
         DataSet<Point> leftPartitionedData = leftResult.getData();
@@ -188,7 +255,7 @@ public class OperationExecutor {
         return this.distanceJoin(distance, leftPartitionedData, leftGlobalTree, rightPartitionedData);
 
     }
-    public DataSet<Tuple2<Point, Point>> distanceJoin(final float distance, DataSet<Point> left, DataSet<RTree> leftTree, final DataSet<Point> right) {
+    public DataSet<JoinedRow> distanceJoin(final float distance, DataSet<Point> left, DataSet<RTree> leftTree, final DataSet<Point> right) {
         // build index for one data set
         DataSet<Tuple2<Integer, Point>> right_joined_partition = right
                 .flatMap(new RichFlatMapFunction<Point, Tuple2<Integer, Point>>() {
@@ -209,45 +276,18 @@ public class OperationExecutor {
                         }
                     }
                 })
-                .withBroadcastSet(leftTree, "leftTree")
-                .partitionByHash(0);
+                .withBroadcastSet(leftTree, "leftTree");
 
-        try {
-            right_joined_partition.print();
-            left.map(new RichMapFunction<Point, Tuple2<Integer, Point>>() {
-                @Override
-                public Tuple2<Integer, Point> map(Point point) throws Exception {
-                    return new Tuple2<Integer, Point>(getRuntimeContext().getIndexOfThisSubtask(), point);
-                }
-            }).print();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-        DataSet<Tuple2<Point, Point>> result = left.map(new RichMapFunction<Point, Tuple2<Integer, Point>>() {
+        DataSet<JoinedRow> result = left.map(new RichMapFunction<Point, Tuple2<Integer, Point>>() {
             @Override
             public Tuple2<Integer, Point> map(Point point) throws Exception {
                 return new Tuple2<Integer, Point>(getRuntimeContext().getIndexOfThisSubtask(), point);
             }
         })
-                .join(right_joined_partition)
+                .coGroup(right_joined_partition)
                 .where(0)
                 .equalTo(0)
-                .filter(new FilterFunction<Tuple2<Tuple2<Integer, Point>, Tuple2<Integer, Point>>>() {
-                    @Override
-                    public boolean filter(Tuple2<Tuple2<Integer, Point>, Tuple2<Integer, Point>> tuple) throws Exception {
-                        Point leftPoint = tuple.f0.f1;
-                        Point rightPoint = tuple.f1.f1;
-                        return leftPoint.calcDistance(rightPoint) <= distance;
-                    }
-                })
-                .map(new MapFunction<Tuple2<Tuple2<Integer, Point>, Tuple2<Integer, Point>>, Tuple2<Point, Point>>() {
-                    @Override
-                    public Tuple2<Point, Point> map(Tuple2<Tuple2<Integer, Point>, Tuple2<Integer, Point>> tuple) throws Exception {
-                        return new Tuple2<Point, Point>(tuple.f0.f1, tuple.f1.f1);
-                    }
-                });
+                .with(new DistanceJoinCoGroupFunc(this.indexBuilder, this.numDimension, this.maxNodePerEntry, distance));
 
         // find the partition first then join
         return result;
@@ -260,7 +300,6 @@ public class OperationExecutor {
         DataSet<Point> rightPartitioned = this.indexBuilder.partition(right, this.numDimension, this.maxNodePerEntry, this.sampleRate, this.parallelism);
         return this.kNNJoin(k, leftPartitioned, leftTree, rightPartitioned);
     }
-
 
     public DataSet<Tuple2<Point, Point>> kNNJoin(final int k, final DataSet<Point> leftPartitioned, final DataSet<RTree> leftTree, final DataSet<Point> rightPartitioned) throws Exception {
         DataSet<Point> rightSample = DataSetUtils.sample(rightPartitioned, false, this.sampleRate);
@@ -392,6 +431,40 @@ public class OperationExecutor {
                     List<Point> kNNPoints = tree.kNN2(leftTuple.f1, k);
                     for(int i =0; i< kNNPoints.size(); i++){
                         collector.collect(new Tuple2<Point, Point>(leftTuple.f1, kNNPoints.get(i)));
+                    }
+                }
+            }
+        }
+    }
+
+    private class DistanceJoinCoGroupFunc implements CoGroupFunction<Tuple2<Integer, Point>, Tuple2<Integer, Point>, JoinedRow> {
+        private IndexBuilder indexBuilder;
+        private int numDimension;
+        private int maxNodePerEntry;
+        private float distance;
+
+        public DistanceJoinCoGroupFunc(IndexBuilder indexBuilder, int numDimension, int maxNodePerEntry, float distance){
+            this.indexBuilder = indexBuilder;
+            this.numDimension = numDimension;
+            this.maxNodePerEntry =maxNodePerEntry;
+            this.distance = distance;
+        }
+
+        @Override
+        public void coGroup(Iterable<Tuple2<Integer, Point>> iterable, Iterable<Tuple2<Integer, Point>> iterable1, Collector<JoinedRow> collector) throws Exception {
+            Iterator<Tuple2<Integer, Point>> leftIter = iterable.iterator();
+            Iterator<Tuple2<Integer, Point>> rightIter = iterable1.iterator();
+            List<Point> rightPoints = new ArrayList<Point>();
+            while(rightIter.hasNext()){
+                rightPoints.add(rightIter.next().f1);
+            }
+            if(!rightPoints.isEmpty()){
+                RTree tree = indexBuilder.createLocalRTree(rightPoints, numDimension, maxNodePerEntry);
+                while(leftIter.hasNext()){
+                    Tuple2<Integer, Point> leftTuple = leftIter.next();
+                    List<Point> circlePoints = tree.circleRange(leftTuple.f1, distance);
+                    for(int i =0; i< circlePoints.size(); i++){
+                        collector.collect(new JoinedRow(leftTuple.f1, circlePoints.get(i)));
                     }
                 }
             }

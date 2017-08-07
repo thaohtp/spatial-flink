@@ -66,9 +66,6 @@ public class RTreeBinayOutputFormat extends BinaryOutputFormat<RTree>{
         output.writeInt(mbr.getNbDimension());
     }
 
-    public void writeObject(DataOutputView output, Object object){
-
-    }
 
     public void writePartitionedMBR(PartitionedMBR partitionedMBR, DataOutputView output) throws IOException {
         this.writeMBR(partitionedMBR.getMbr(), output);

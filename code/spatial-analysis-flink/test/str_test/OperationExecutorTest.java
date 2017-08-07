@@ -3,6 +3,7 @@ package str_test;
 import de.tu_berlin.dima.IndexBuilder;
 import de.tu_berlin.dima.OperationExecutor;
 import de.tu_berlin.dima.RTree;
+import de.tu_berlin.dima.datatype.JoinedRow;
 import de.tu_berlin.dima.datatype.MBR;
 import de.tu_berlin.dima.datatype.Point;
 import de.tu_berlin.dima.test.IndexBuilderResult;
@@ -41,6 +42,7 @@ public class OperationExecutorTest {
 
     private DataSet<RTree> globalTree;
     private DataSet<Point> partitionedData;
+    private DataSet<RTree> localTrees;
 
     private void prepareData() throws Exception {
         this.points.clear();
@@ -69,6 +71,7 @@ public class OperationExecutorTest {
 
         partitionedData = indexResult.getData();
         globalTree = indexResult.getGlobalRTree();
+        localTrees = indexResult.getLocalRTree();
     }
 
     private void prepareDataWithoutIndex() throws Exception {
@@ -126,6 +129,34 @@ public class OperationExecutorTest {
         // Test not found result
         MBR mbr2 = new MBR(TestUtil.create2DPoint(0,0), TestUtil.create2DPoint(0.5f, 0.5f));
         List<Point> actual2 = this.operationExecutor.boxRangeQuery(mbr2, this.leftDS).collect();
+        Assert.assertEquals("Not empty result", true, actual2.isEmpty());
+    }
+
+    @Test
+    public void testBoxRangeQueryWithIndex() throws Exception {
+        prepareData();
+
+        Point p1 = TestUtil.create2DPoint(-1,-1);
+        Point p2 = TestUtil.create2DPoint(10,4);
+        MBR mbr = new MBR(2);
+        mbr.addPoint(p1);
+        mbr.addPoint(p2);
+
+        // Test found result
+        List<Point> actual = this.operationExecutor.boxRangeQuery(mbr, partitionedData, globalTree, localTrees).collect();
+        List<Point> expected = new ArrayList<Point>();
+        expected.add(TestUtil.create2DPoint(1, 0));
+        expected.add(TestUtil.create2DPoint(1, 2));
+        expected.add(TestUtil.create2DPoint(2, 2));
+        expected.add(TestUtil.create2DPoint(10, 4));
+
+        for(int i =0; i< expected.size(); i++){
+            Assert.assertEquals("Not found point: " + expected.get(i) , true, actual.contains(expected.get(i)));
+        }
+
+        // Test not found result
+        MBR mbr2 = new MBR(TestUtil.create2DPoint(0,0), TestUtil.create2DPoint(0.5f, 0.5f));
+        List<Point> actual2 = this.operationExecutor.boxRangeQuery(mbr2, partitionedData, globalTree, localTrees).collect();
         Assert.assertEquals("Not empty result", true, actual2.isEmpty());
     }
 
@@ -365,6 +396,92 @@ public class OperationExecutorTest {
         }
     }
 
+
+    @Test
+    public void testCircleRangeWithIndex() throws Exception {
+        prepareData();
+
+        Point queryPoint = TestUtil.create2DPoint(1,2);
+        float radius = 5f;
+        // Test found result
+        List<Point> actual = this.operationExecutor.circleRangeQuery(queryPoint, radius, partitionedData, globalTree, localTrees).collect();
+        List<Point> expected = new ArrayList<Point>();
+        expected.add(TestUtil.create2DPoint(1, 0));
+        expected.add(TestUtil.create2DPoint(1, 2));
+        expected.add(TestUtil.create2DPoint(2, 2));
+        expected.add(TestUtil.create2DPoint(-1,5));
+
+        System.out.println(actual);
+        for(int i =0; i< expected.size(); i++){
+            Assert.assertEquals("Not found point: " + expected.get(i) , true, actual.contains(expected.get(i)));
+        }
+        Assert.assertEquals(expected.size(), actual.size());
+
+        // Test not found result
+        Point notFoundPoint = TestUtil.create2DPoint(3,4);
+        float notFoundRadius = 1;
+        List<Point> actual2 = this.operationExecutor.circleRangeQuery(notFoundPoint, notFoundRadius, partitionedData, globalTree, localTrees).collect();
+        Assert.assertEquals("Not empty result", true, actual2.isEmpty());
+
+
+        Map<String, List<Point>> expectedMap = new HashMap<String, List<Point>>();
+        List<Point> expected10 = new ArrayList<Point>();
+        expected10.add(TestUtil.create2DPoint(1,0));
+        expected10.add(TestUtil.create2DPoint(1,2));
+        expected10.add(TestUtil.create2DPoint(2,2));
+        expected10.add(TestUtil.create2DPoint(-1,5));
+        expectedMap.put(TestUtil.create2DPoint(1,0).toString(),expected10);
+
+        List<Point> expected12 = new ArrayList<Point>();
+        expected12.add(TestUtil.create2DPoint(1,2));
+        expected12.add(TestUtil.create2DPoint(1,0));
+        expected12.add(TestUtil.create2DPoint(2,2));
+        expected12.add(TestUtil.create2DPoint(-1,5));
+        expectedMap.put(TestUtil.create2DPoint(1,2).toString(), expected12);
+
+        List<Point> expected22 = new ArrayList<Point>();
+        expected22.add(TestUtil.create2DPoint(2,2));
+        expected22.add(TestUtil.create2DPoint(1,0));
+        expected22.add(TestUtil.create2DPoint(1,2));
+        expected22.add(TestUtil.create2DPoint(-1,5));
+        expectedMap.put(TestUtil.create2DPoint(2,2).toString(), expected22);
+
+        List<Point> expected39 = new ArrayList<Point>();
+        expected39.add(TestUtil.create2DPoint(3,9));
+        expected39.add(TestUtil.create2DPoint(-1,5));
+        expected39.add(TestUtil.create2DPoint(2,2));
+        expectedMap.put(TestUtil.create2DPoint(3,9).toString(), expected39);
+
+        List<Point> expected15 = new ArrayList<Point>();
+        expected15.add(TestUtil.create2DPoint(-1,5));
+        expected15.add(TestUtil.create2DPoint(1,2));
+        expected15.add(TestUtil.create2DPoint(2,2));
+        expected15.add(TestUtil.create2DPoint(1,0));
+        expected15.add(TestUtil.create2DPoint(3,9));
+        expectedMap.put(TestUtil.create2DPoint(-1,5).toString(), expected15);
+
+        List<Point> expected104 = new ArrayList<Point>();
+        expected104.add(TestUtil.create2DPoint(10,4));
+        expected104.add(TestUtil.create2DPoint(11,10));
+        expectedMap.put(TestUtil.create2DPoint(10,4).toString(), expected104);
+
+        List<Point> expected1110 = new ArrayList<Point>();
+        expected1110.add(TestUtil.create2DPoint(11,10));
+        expected1110.add(TestUtil.create2DPoint(10,4));
+        expectedMap.put(TestUtil.create2DPoint(11,10).toString(), expected1110);
+        for(int i =0; i<this.points.size(); i++){
+            Point curPoint = this.points.get(i);
+            List<Point> expectedList = expectedMap.get(curPoint.toString());
+            List<Point> actualList = this.operationExecutor.circleRangeQuery(curPoint, 6f, partitionedData, globalTree, localTrees).collect();
+            for(int j =0; j<actualList.size(); j++){
+                Assert.assertEquals("Not found point in actual list: " + expectedList.get(j) , true, actualList.contains(expectedList.get(j)));
+            }
+            for(int j =0; j<actualList.size(); j++){
+                Assert.assertEquals("Not found point in expected list: " + actualList.get(j) , true, expectedList.contains(actualList.get(j)));
+            }
+        }
+    }
+
     @Test
     public void testDistanceJoin() throws Exception {
         prepareDataWithoutIndex();
@@ -415,10 +532,10 @@ public class OperationExecutorTest {
         expected1110.add(TestUtil.create2DPoint(10,4));
         expectedMap.put(TestUtil.create2DPoint(11,10).toString(), expected1110);
 
-        List<Tuple2<Point, Point>> result = this.operationExecutor.distanceJoin(6f, this.leftDS, this.rightDS).collect();
+        List<JoinedRow> result = this.operationExecutor.distanceJoin(6f, this.leftDS, this.rightDS).collect();
         for(int i =0; i<result.size(); i++){
-            Point left = result.get(i).f0;
-            Point right = result.get(i).f1;
+            Point left = result.get(i).getLeft();
+            Point right = result.get(i).getRight();
             List<Point> expectedList = expectedMap.get(left.toString());
             Assert.assertEquals("Not found point in expected list: " + left , true, expectedList.contains(right));
         }

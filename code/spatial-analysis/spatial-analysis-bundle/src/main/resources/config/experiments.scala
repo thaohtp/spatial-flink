@@ -34,7 +34,11 @@ import org.springframework.context.{ApplicationContext, ApplicationContextAware}
   classOf[config.fixtures.spatialanalysiss10_v1],
   classOf[config.fixtures.simba1],
   classOf[config.fixtures.simba5],
-  classOf[config.fixtures.simba10]
+  classOf[config.fixtures.simba10],
+  classOf[config.fixtures.circlerangequery],
+  classOf[config.fixtures.knnquery],
+  classOf[config.fixtures.distancejoin],
+  classOf[config.fixtures.knnjoin]
 ))
 class experiments extends ApplicationContextAware {
 

@@ -88,7 +88,6 @@ public class RTree implements Serializable{
             if(node.isLeaf()){
                 List<PartitionedMBR> entries = ((MBRLeafNode) node).getEntries();
                 for (PartitionedMBR entry: entries) {
-                    System.out.println("MBR: " + entry.getMbr() + " - " + entry.getPartitionNumber() + " - intersects " + entry.getMbr().intersects(queryPoint, radius));
                     if(entry.getMbr().intersects(queryPoint, radius)){
                         result.add(entry);
                     }
@@ -116,7 +115,32 @@ public class RTree implements Serializable{
                 if(curNode.isLeaf()){
                     List<Point> entries = ((PointLeafNode) curNode).getEntries();
                     for (Point entry: entries) {
-                        if(entry.calcDistance(queryPoint) <= radius){
+                        if(entry.calcDistanceSquare(queryPoint) <= radius * radius){
+                            result.add(entry);
+                        }
+                    }
+                }
+                else{
+                    List<RTreeNode> childNodes = curNode.getChildNodes();
+                    nodes.addAll(childNodes);
+                }
+            }
+        }
+        return result;
+    }
+
+
+    public List<Point> boxRange(MBR box){
+        List<Point> result = new ArrayList<Point>();
+        List<RTreeNode> nodes = new ArrayList<RTreeNode>();
+        nodes.add(this.rootNode);
+        while(!nodes.isEmpty()){
+            RTreeNode curNode = nodes.remove(0);
+            if(curNode.getMbr().intersects(box)){
+                if(curNode.isLeaf()){
+                    List<Point> entries = ((PointLeafNode) curNode).getEntries();
+                    for (Point entry: entries) {
+                        if(box.contains(entry)){
                             result.add(entry);
                         }
                     }
@@ -286,7 +310,6 @@ public class RTree implements Serializable{
                 return d1.compareTo(d2);
             }
         });
-        System.out.println("Point: " + queryPoint + " - Range size " + rangePoints.size());
         return rangePoints.subList(0, k);
     }
 
